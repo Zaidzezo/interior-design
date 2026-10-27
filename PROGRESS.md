@@ -1,3 +1,7 @@
+# Latest material studio update
+
+See [PRESENTATION-UPGRADE.md](PRESENTATION-UPGRADE.md) for recent furniture, material/view controls, profile plans, marquee selection and the network-blocked procedural asset fallback. This does not complete photorealistic imported assets.
+
 # Latest editor bug fixes
 
 See [BUGFIXES.md](BUGFIXES.md) for the subsequent interaction, catalog, materials, wall and session fixes. The earlier implementation record below is historical. Source was subsequently committed and pushed to GitHub.

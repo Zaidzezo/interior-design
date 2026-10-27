@@ -1,3 +1,7 @@
+# Material studio verification
+
+New tests: tests/presentation.test.ts checks legacy migration, finish history, recent placement and grouping; tests/e2e/presentation.spec.ts checks recent/finish/view controls and marquee selection. scripts/performance-canvas.ts measures a real 150-object canvas. See PRESENTATION-UPGRADE.md for the current feature and asset limitations.
+
 # Verification
 
 Run from the repository root, with `export XDG_DATA_HOME=/workspace/.local/share` in this cloud machine.

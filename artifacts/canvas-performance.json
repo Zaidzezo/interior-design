@@ -1,0 +1,10 @@
+{
+  "objects": 150,
+  "frames": 120,
+  "mode": "idle canvas with all objects visible, Chromium software rendering",
+  "medianMs": 16.699999999999818,
+  "p95Ms": 16.800000000000182,
+  "maxMs": 316.60000000000036,
+  "over33ms": 4,
+  "limitation": "Idle rendering only; not a claim of 60fps during drag or production GPU performance."
+}

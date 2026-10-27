@@ -86,12 +86,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 6705,
+                      "duration": 1138,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-10-27T15:30:36.748Z",
+                      "startTime": "2026-10-27T16:26:11.149Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -120,12 +120,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 172,
+                      "duration": 168,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-10-27T15:30:43.477Z",
+                      "startTime": "2026-10-27T16:26:12.307Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -164,12 +164,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 41106,
+                  "duration": 40309,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-27T15:30:43.692Z",
+                  "startTime": "2026-10-27T16:26:12.499Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -198,12 +198,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 12590,
+                  "duration": 14573,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-27T15:31:25.144Z",
+                  "startTime": "2026-10-27T16:26:53.092Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -232,12 +232,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 10184,
+                  "duration": 10952,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-27T15:31:37.762Z",
+                  "startTime": "2026-10-27T16:27:07.733Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -266,12 +266,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 6803,
+                  "duration": 8158,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-27T15:31:47.972Z",
+                  "startTime": "2026-10-27T16:27:18.700Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -300,12 +300,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 14976,
+                  "duration": 19417,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-27T15:31:54.795Z",
+                  "startTime": "2026-10-27T16:27:26.867Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -316,6 +316,82 @@
           "id": "d2f56d7d370f0ba02e91-18a818dc56be40f6bf91",
           "file": "editor.spec.ts",
           "line": 257,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "presentation.spec.ts",
+      "file": "presentation.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "recent furniture, finish controls and blueprint toggle",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 13422,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T16:27:46.326Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "57a964c83dbf6a737e02-3afe4ed68c9e45eb379e",
+          "file": "presentation.spec.ts",
+          "line": 4,
+          "column": 1
+        },
+        {
+          "title": "Shift marquee selects furniture as a group of selection IDs",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8698,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T16:27:59.763Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "57a964c83dbf6a737e02-65f7bd83803120db9d7e",
+          "file": "presentation.spec.ts",
+          "line": 57,
           "column": 1
         }
       ]
@@ -342,12 +418,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 13918,
+                  "duration": 20381,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-27T15:32:09.811Z",
+                  "startTime": "2026-10-27T16:28:08.506Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -376,12 +452,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 10137,
+                  "duration": 15633,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-27T15:32:23.751Z",
+                  "startTime": "2026-10-27T16:28:28.914Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -393,15 +469,49 @@
           "file": "regressions.spec.ts",
           "line": 110,
           "column": 1
+        },
+        {
+          "title": "default walls select, move and resize through canvas gestures",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 12210,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T16:28:44.585Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a34af78d704591628420-bba1fa065b26346e4aa9",
+          "file": "regressions.spec.ts",
+          "line": 157,
+          "column": 1
         }
       ]
     }
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-10-27T15:30:35.358Z",
-    "duration": 118678.37999999999,
-    "expected": 9,
+    "startTime": "2026-10-27T16:26:10.089Z",
+    "duration": 166916.307,
+    "expected": 12,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

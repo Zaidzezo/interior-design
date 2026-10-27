@@ -60,3 +60,4 @@ it("group selection expands and ungrouping remains available", () => {
       .every((i) => !i.groupId),
   ).toBe(true);
 });
+it('presentation migration is idempotent and preserves coordinates, IDs and the source',async()=>{const {migratePresentation}=await import('../packages/core/src/presentation');const scene=sampleScene(),original=structuredClone(scene),next=migratePresentation(scene);expect(scene).toEqual(original);expect(next.floors[0].items.map(i=>[i.id,i.x,i.y,i.width,i.depth])).toEqual(scene.floors[0].items.map(i=>[i.id,i.x,i.y,i.width,i.depth]));expect(migratePresentation(next)).toEqual(next);expect(next.floors[0].items[0].finish).toBe('original');});
