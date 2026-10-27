@@ -1,0 +1,35 @@
+{
+  "name": "@buildspace/web",
+  "private": true,
+  "scripts": {
+    "dev": "tsx server.mts",
+    "build": "next build",
+    "start": "NODE_ENV=production tsx server.mts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "15.5.28",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "konva": "10.0.0",
+    "react-konva": "19.0.10",
+    "three": "0.180.0",
+    "@react-three/fiber": "9.4.0",
+    "@react-three/drei": "10.7.6",
+    "zustand": "5.0.8",
+    "zod": "4.1.12",
+    "lucide-react": "0.548.0",
+    "@tanstack/react-query": "5.90.5",
+    "jspdf": "3.0.3",
+    "ws": "8.18.3"
+  },
+  "devDependencies": {
+    "@types/react": "19.1.16",
+    "@types/react-dom": "19.1.9",
+    "@types/three": "0.180.0",
+    "tailwindcss": "4.1.16",
+    "@tailwindcss/postcss": "4.1.16",
+    "@types/ws": "8.18.1"
+  },
+  "type": "module"
+}

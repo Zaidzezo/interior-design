@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+  engineType = "client"
+}
+datasource db {
+  provider = "postgresql"
+}
+model User {
+  id String @id @default(uuid())
+  email String @unique
+  name String
+  password String?
+  createdAt DateTime @default(now())
+  sessions Session[]
+  projects Project[]
+  memberships Member[]
+}
+model Session {
+  id String @id
+  userId String
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  expiresAt DateTime
+}
+model Project {
+  id String @id @default(uuid())
+  name String
+  ownerId String
+  owner User @relation(fields:[ownerId],references:[id],onDelete:Cascade)
+  scene Json
+  revision Int @default(0)
+  favorite Boolean @default(false)
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  versions Version[]
+  members Member[]
+  shares Share[]
+}
+model Version {
+  id String @id @default(uuid())
+  projectId String
+  project Project @relation(fields:[projectId],references:[id],onDelete:Cascade)
+  name String
+  revision Int
+  scene Json
+  createdAt DateTime @default(now())
+}
+model Member {
+  id String @id @default(uuid())
+  projectId String
+  project Project @relation(fields:[projectId],references:[id],onDelete:Cascade)
+  userId String
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  role String
+  @@unique([projectId,userId])
+}
+model Share {
+  id String @id @default(uuid())
+  token String @unique
+  projectId String
+  project Project @relation(fields:[projectId],references:[id],onDelete:Cascade)
+  createdAt DateTime @default(now())
+}

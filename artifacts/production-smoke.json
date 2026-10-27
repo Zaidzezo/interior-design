@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "health": {
+    "ok": true,
+    "database": "postgresql"
+  },
+  "sampleRooms": 7,
+  "saveReload": true,
+  "pageErrors": []
+}
