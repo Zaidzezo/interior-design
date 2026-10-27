@@ -37,7 +37,7 @@ import {
 } from "@core/geometry";
 import { totalCost } from "@core/estimate";
 import { editWall } from "@core/wall-edit";
-import { materials, getCatalog } from "@core/catalog";
+import { materials, getCatalog, furnitureFinishes } from "@core/catalog";
 import { furnitureSvg, svgData } from "@core/vector";
 export function Numeric({
   label,
@@ -278,6 +278,82 @@ export default function Inspector({ onIssues }: { onIssues: () => void }) {
                   }
                 >
                   Reverse opening swing
+                </button>
+              </>
+            )}
+            {wall && (
+              <>
+                <label className="field-label">
+                  WALL COLOR
+                  <input
+                    type="color"
+                    aria-label="Wall color"
+                    value={wall.color}
+                    onChange={(e) =>
+                      s.commit((scene) => {
+                        scene.floors
+                          .find((f) => f.id === s.floorId)!
+                          .walls.find((w) => w.id === id)!.color =
+                          e.target.value;
+                      })
+                    }
+                  />
+                </label>
+                <label className="field-label">
+                  WALL FINISH
+                  <select
+                    aria-label="Wall finish"
+                    value={wall.finish ?? "matte"}
+                    onChange={(e) =>
+                      s.commit((scene) => {
+                        scene.floors
+                          .find((f) => f.id === s.floorId)!
+                          .walls.find((w) => w.id === id)!.finish = e.target
+                          .value as typeof wall.finish;
+                      })
+                    }
+                  >
+                    {["matte", "plaster", "brick", "paneling", "wallpaper"].map(
+                      (v) => (
+                        <option key={v}>{v}</option>
+                      ),
+                    )}
+                  </select>
+                </label>
+              </>
+            )}
+            {item && (
+              <>
+                <label className="field-label">
+                  FURNITURE FINISH
+                  <select
+                    aria-label="Furniture finish"
+                    value={item.finish ?? "original"}
+                    onChange={(e) => {
+                      const finish = furnitureFinishes.find(
+                        (f) => f.id === e.target.value,
+                      )!;
+                      s.updateItem(id, {
+                        finish: finish.id,
+                        ...(finish.color
+                          ? { color: finish.color }
+                          : { color: getCatalog(item.catalogId).color }),
+                      });
+                    }}
+                  >
+                    {furnitureFinishes.map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  className="button"
+                  aria-pressed={!!item.flipX}
+                  onClick={() => s.updateItem(id, { flipX: !item.flipX })}
+                >
+                  Mirror / arm side
                 </button>
               </>
             )}
@@ -571,7 +647,11 @@ export default function Inspector({ onIssues }: { onIssues: () => void }) {
                   item?.locked ? Unlock : Lock,
                 ],
                 ["hide", "Hide / show", EyeOff],
-                ["group", "Group", Group],
+                [
+                  item?.groupId ? "ungroup" : "group",
+                  item?.groupId ? "Ungroup" : "Group",
+                  Group,
+                ],
               ].map(([action, label, Icon]) => (
                 <button
                   key={action as string}

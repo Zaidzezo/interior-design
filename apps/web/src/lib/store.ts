@@ -36,6 +36,8 @@ type State = {
   readOnly: boolean;
   tool: Tool;
   view: "2D" | "3D";
+  planStyle: "realistic" | "blueprint";
+  recentItems: string[];
   grid: boolean;
   snap: boolean;
   measurements: boolean;
@@ -82,6 +84,8 @@ export const useEditor = create<State>((set, get) => {
     readOnly: false,
     tool: "select",
     view: "2D",
+    planStyle: "realistic",
+    recentItems: [],
     grid: true,
     snap: true,
     measurements: true,
@@ -95,7 +99,11 @@ export const useEditor = create<State>((set, get) => {
     placingRotation: 0,
     message: "",
     status: "loading",
-    set: (patch) => set(patch),
+    set: (patch) => {
+      if (patch.planStyle && typeof window !== "undefined")
+        localStorage.setItem("buildspace-plan-style", patch.planStyle);
+      set(patch);
+    },
     load: (scene, id, revision, readOnly = false) => {
       const parsed = SceneSchema.parse(scene);
       if (
@@ -172,16 +180,26 @@ export const useEditor = create<State>((set, get) => {
         status: "unsaved",
       });
     },
-    select: (id, multi = false) =>
+    select: (id, multi = false) => {
+      if (!id) {
+        set({ selected: [] });
+        return;
+      }
+      const f = get().scene.floors.find((f) => f.id === get().floorId)!;
+      const item = f.items.find((i) => i.id === id);
+      const ids = item?.groupId
+        ? f.items
+            .filter((i) => i.groupId === item.groupId && !i.hidden)
+            .map((i) => i.id)
+        : [id];
       set({
-        selected: id
-          ? multi
-            ? get().selected.includes(id)
-              ? get().selected.filter((x) => x !== id)
-              : [...get().selected, id]
-            : [id]
-          : [],
-      }),
+        selected: multi
+          ? get().selected.includes(id)
+            ? get().selected.filter((id) => !ids.includes(id))
+            : [...new Set([...get().selected, ...ids])]
+          : ids,
+      });
+    },
     updateItem: (id, patch) =>
       get().commit((s) => {
         const i = s.floors.flatMap((f) => f.items).find((i) => i.id === id);
@@ -216,14 +234,24 @@ export const useEditor = create<State>((set, get) => {
     addItem: (catalogId, p) => {
       const c = getCatalog(catalogId);
       const id = uid();
+      const recentItems = [
+        catalogId,
+        ...get().recentItems.filter((id) => id !== catalogId),
+      ].slice(0, 8);
+      set({ recentItems });
+      if (typeof window !== "undefined")
+        localStorage.setItem(
+          "buildspace-recent-items",
+          JSON.stringify(recentItems),
+        );
       get().commit((s) => {
         const f = s.floors.find((f) => f.id === get().floorId)!;
         f.items.push({
           id,
           catalogId: c.id,
           name: c.name,
-          x: get().snap ? snap(p.x) : p.x,
-          y: get().snap ? snap(p.y) : p.y,
+          x: p.x,
+          y: p.y,
           width: c.width,
           depth: c.depth,
           height: c.height,

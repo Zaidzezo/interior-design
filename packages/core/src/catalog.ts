@@ -524,3 +524,45 @@ export const materials = [
     family: "Paint",
   },
 ];
+
+export const furnitureFinishes = [
+  { id: "original", name: "Original", color: null },
+  { id: "boucle", name: "Ivory bouclé", color: "#e8dfcc" },
+  { id: "velvet", name: "Sage velvet", color: "#879c8a" },
+  { id: "walnut", name: "Smoked walnut", color: "#8c674d" },
+  { id: "marble", name: "Calacatta marble", color: "#eeeae2" },
+  { id: "brass", name: "Brushed brass", color: "#bfa16a" },
+  { id: "rattan", name: "Natural rattan", color: "#c5a877" },
+] as const;
+export const finishIds = furnitureFinishes.map((f) => f.id);
+export function floorTexture(id: string) {
+  return [
+    "oak",
+    "walnut",
+    "ash",
+    "tile",
+    "marble",
+    "carpet",
+    "concrete",
+    "terrazzo",
+    "herringbone",
+  ].includes(id)
+    ? id
+    : null;
+}
+materials.push(
+  {
+    id: "herringbone",
+    name: "Oak herringbone",
+    color: "#cbb18d",
+    rate: 68,
+    family: "Wood",
+  },
+  {
+    id: "plain",
+    name: "Plain color",
+    color: "#e9e7df",
+    rate: 16,
+    family: "Paint",
+  },
+);

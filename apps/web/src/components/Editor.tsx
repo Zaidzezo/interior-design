@@ -517,6 +517,18 @@ function Workspace() {
                 </span>
               )}
               <button
+                title="Switch plan rendering"
+                aria-pressed={s.planStyle === "realistic"}
+                onClick={() =>
+                  s.set({
+                    planStyle:
+                      s.planStyle === "realistic" ? "blueprint" : "realistic",
+                  })
+                }
+              >
+                {s.planStyle === "realistic" ? "Realistic" : "Blueprint"}
+              </button>
+              <button
                 className={s.snap ? "enabled" : ""}
                 title="Toggle snap to 0.25 m grid"
                 onClick={() => s.set({ snap: !s.snap })}

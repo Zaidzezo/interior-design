@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ChevronDown,
   ChevronRight,
@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { useEditor, activeFloor } from "@/lib/store";
 import { useSession, accountInitials } from "@/lib/session";
-import { catalog, materials, Kind } from "@core/catalog";
+import { catalog, materials, Kind, floorTexture } from "@core/catalog";
 import { furnitureSvg, svgData, woodSvg } from "@core/vector";
 import { area } from "@core/geometry";
 const roomTypes: [string, Kind][] = [
@@ -44,6 +44,22 @@ export default function Sidebar({
   const session = useSession();
   const s = useEditor();
   const f = activeFloor();
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("buildspace-plan-style");
+      if (saved === "realistic" || saved === "blueprint")
+        s.set({ planStyle: saved });
+      const ids = JSON.parse(
+        localStorage.getItem("buildspace-recent-items") ?? "[]",
+      );
+      if (Array.isArray(ids))
+        s.set({
+          recentItems: ids
+            .filter((id) => catalog.some((c) => c.id === id))
+            .slice(0, 8),
+        });
+    } catch {}
+  }, []);
   const [search, setSearch] = useState(""),
     [category, setCategory] = useState("All"),
     [favorites, setFavorites] = useState<string[]>(() => {
@@ -213,6 +229,32 @@ export default function Sidebar({
             <p className="sidebar-hint">
               Drag into your plan, or click to place.
             </p>
+            {!!s.recentItems.length && (
+              <section
+                aria-label="Recently used furniture"
+                className="recent-furniture"
+              >
+                <div className="section-heading">RECENTLY USED</div>
+                <div>
+                  {s.recentItems.map((id) => {
+                    const c = catalog.find((c) => c.id === id)!;
+                    return (
+                      <button
+                        key={id}
+                        title={c.name}
+                        onClick={() => s.set({ placing: id, tool: "select" })}
+                      >
+                        <img
+                          loading="lazy"
+                          src={svgData(furnitureSvg(c.id, c.color))}
+                          alt={c.name}
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
             <div className="catalog-grid">
               {filtered.map((c) => (
                 <div
@@ -254,6 +296,7 @@ export default function Sidebar({
                     }
                   >
                     <img
+                      loading="lazy"
                       src={svgData(furnitureSvg(c.id, c.color))}
                       alt={c.name}
                     />
@@ -310,7 +353,9 @@ export default function Sidebar({
                   >
                     <span
                       style={{
-                        backgroundImage: `url("${svgData(woodSvg(m.color, m.family !== "Wood"))}")`,
+                        backgroundImage: floorTexture(m.id)
+                          ? `url(/assets/materials/${m.id}-albedo.webp)`
+                          : `url("${svgData(woodSvg(m.color, m.family !== "Wood"))}")`,
                       }}
                     />
                     <strong>{m.name}</strong>

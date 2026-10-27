@@ -21,7 +21,13 @@ export const WallSchema = z.object({
   b: PointSchema,
   thickness: positive.max(2),
   height: positive.max(20),
-  color: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#26364c"),
+  color: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .default("#26364c"),
+  finish: z
+    .enum(["matte", "plaster", "brick", "paneling", "wallpaper"])
+    .optional(),
   source: z.enum(["room", "manual"]).optional(),
 });
 export const OpeningSchema = z.object({
@@ -62,6 +68,17 @@ export const ItemSchema = z.object({
   hidden: z.boolean(),
   groupId: z.string().optional(),
   flipX: z.boolean().optional(),
+  finish: z
+    .enum([
+      "original",
+      "boucle",
+      "velvet",
+      "walnut",
+      "marble",
+      "brass",
+      "rattan",
+    ])
+    .optional(),
 });
 export const ReferenceSchema = z.object({
   ...entity,
@@ -84,7 +101,10 @@ export const FloorSchema = z.object({
   height: positive,
   rooms: z.array(RoomSchema).max(300),
   walls: z.array(WallSchema).max(2000),
-  removedBoundaries: z.array(z.object({a:PointSchema,b:PointSchema})).max(2000).optional(),
+  removedBoundaries: z
+    .array(z.object({ a: PointSchema, b: PointSchema }))
+    .max(2000)
+    .optional(),
   openings: z.array(OpeningSchema).max(1000),
   items: z.array(ItemSchema).max(2000),
   references: z.array(ReferenceSchema).max(5).default([]),

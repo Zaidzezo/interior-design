@@ -969,6 +969,11 @@ function Account({ run }: { run: (f: () => Promise<void>) => void }) {
     [password, setPassword] = useState(""),
     [name, setName] = useState("");
   const { data, isPending, isError, refetch } = useSession();
+  const plans = useQuery<any[]>({
+    queryKey: ["account-plans"],
+    queryFn: () => api("projects"),
+    enabled: !!data?.user,
+  });
   if (isPending) return <p role="status">Loading your account…</p>;
   if (isError)
     return (
@@ -982,9 +987,37 @@ function Account({ run }: { run: (f: () => Promise<void>) => void }) {
   if (user && registered)
     return (
       <section aria-label="Profile">
+        <div className="profile-avatar" aria-label="Profile avatar">
+          {user.name
+            .split(" ")
+            .map((n: string) => n[0])
+            .slice(0, 2)
+            .join("")}
+        </div>
         <h3>{user.name}</h3>
         <p>{user.email}</p>
-        <p>You are signed in. Your projects are saved to this account.</p>
+        <h4>Saved plans</h4>
+        {plans.isPending ? (
+          <p role="status">Loading plans…</p>
+        ) : plans.isError ? (
+          <p role="alert">Unable to load plans.</p>
+        ) : (
+          <div className="profile-plans">
+            {plans.data?.map((p) => (
+              <button
+                className="button"
+                key={p.id}
+                onClick={() => {
+                  localStorage.setItem("buildspace-project", p.id);
+                  window.location.reload();
+                }}
+              >
+                {p.name}
+              </button>
+            ))}
+            {!plans.data?.length && <p>No saved plans yet.</p>}
+          </div>
+        )}
         <button
           className="delete-button"
           onClick={() =>

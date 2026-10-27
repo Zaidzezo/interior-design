@@ -39,7 +39,7 @@ import {
   corners,
   formatLength,
 } from "@core/geometry";
-import { getCatalog } from "@core/catalog";
+import { getCatalog, floorTexture } from "@core/catalog";
 import { furnitureSvg, woodSvg, svgData } from "@core/vector";
 import { rectangleRoom } from "@core/sample";
 function useSvg(svg: string) {
@@ -56,23 +56,60 @@ function useSvg(svg: string) {
 }
 function FloorFill({
   color,
+  material,
   tile,
   points,
   selected,
 }: {
   color: string;
+  material: string;
   tile: boolean;
   points: Point[];
   selected: boolean;
 }) {
-  const image = useSvg(woodSvg(color, tile));
+  const fallback = useSvg(woodSvg(color, tile));
+  const [texture, setTexture] = useState<HTMLImageElement>();
+  const style = useEditor((s) => s.planStyle);
+  useEffect(() => {
+    let active=true;
+    setTexture(undefined);
+    const id = floorTexture(material);
+    if (!id || style === "blueprint") return;
+    const image = new window.Image();
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = canvas.height = 256;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(image, 0, 0, 256, 256);
+      ctx.globalCompositeOperation = "multiply";
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.35;
+      ctx.fillRect(0, 0, 256, 256);
+      const tinted = new window.Image();
+      tinted.onload = () => { if(active)setTexture(tinted); };
+      tinted.src = canvas.toDataURL();
+    };
+    image.src = `/assets/materials/${id}-albedo.webp`;
+    return () => {
+      active=false;
+      image.onload = null;
+    };
+  }, [material, style, color]);
+  const image =
+    style === "blueprint" || material === "plain"
+      ? undefined
+      : (texture ?? fallback);
   return (
     <Line
       points={points.flatMap((p) => [p.x, p.y])}
       closed
-      fill={color}
+      fill={style === "blueprint" ? "#f4f5f8" : color}
+      opacity={1}
       fillPatternImage={image}
-      fillPatternScale={{ x: 0.0125, y: 0.0125 }}
+      fillPatternScale={{
+        x: 1.2 / (texture ? 256 : 96),
+        y: 1.2 / (texture ? 256 : 96),
+      }}
       fillPriority={image ? "pattern" : "color"}
       stroke={selected ? "#7770ed" : undefined}
       strokeWidth={0.045}
@@ -82,7 +119,17 @@ function FloorFill({
 const Furniture = memo(function Furniture({ item }: { item: Item }) {
   const { selected, select, tool, snap: snapping } = useEditor();
   const ref = useRef<Konva.Group>(null);
-  const image = useSvg(furnitureSvg(item.catalogId, item.color));
+  const planStyle = useEditor((s) => s.planStyle);
+  const image = useSvg(
+    furnitureSvg(
+      item.catalogId,
+      item.color,
+      180,
+      140,
+      planStyle === "realistic",
+      item.finish,
+    ),
+  );
   const active = selected.includes(item.id);
   if (item.hidden) return null;
   return (
@@ -369,6 +416,15 @@ export default function PlanCanvas() {
 
   const stage = useRef<Konva.Stage>(null);
   const [size, setSize] = useState({ w: 900, h: 700 });
+  const touches = useRef(new Map<number, Point>());
+  const pinch = useRef<{
+    distance: number;
+    mid: Point;
+    zoom: number;
+    pan: Point;
+  } | null>(null);
+  const marqueeStart = useRef<Point | null>(null);
+  const [marquee, setMarquee] = useState<{ a: Point; b: Point } | null>(null);
   const [start, setStart] = useState<Point | null>(null);
   const [cursor, setCursor] = useState<Point>({ x: 0, y: 0 });
   const dragOrigin = useRef<Point | null>(null);
@@ -443,6 +499,9 @@ export default function PlanCanvas() {
       if (e.key === "Escape") {
         setStart(null);
         setPolygon([]);
+        marqueeStart.current = null;
+        setMarquee(null);
+        setGuide(null);
         s.set({ placing: null, tool: "select" });
         s.select(null);
         setContext(null);
@@ -611,9 +670,69 @@ export default function PlanCanvas() {
       ref={host}
       className={`plan-surface ${s.tool === "pan" || space ? "panning" : s.tool !== "select" || s.placing ? "drawing" : ""}`}
       data-testid="plan-canvas"
+      role="application"
+      aria-label="Floor plan canvas. Shift drag for marquee, Space drag to pan, pinch to zoom."
+      tabIndex={0}
       onPointerDownCapture={(e) => {
         const target = e.target as HTMLElement;
         if (target.tagName === "CANVAS") target.setPointerCapture(e.pointerId);
+        if (e.pointerType !== "touch") return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        touches.current.set(e.pointerId, {
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top,
+        });
+        if (touches.current.size === 2) {
+          const [a, b] = [...touches.current.values()];
+          const state = useEditor.getState();
+          pinch.current = {
+            distance: distance(a, b),
+            mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 },
+            zoom: state.zoom,
+            pan: state.pan,
+          };
+          stage.current?.stopDrag();
+          stage.current?.find("Group").forEach((n) => n.stopDrag());
+        }
+      }}
+      onPointerMoveCapture={(e) => {
+        if (e.pointerType !== "touch" || !touches.current.has(e.pointerId))
+          return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        touches.current.set(e.pointerId, {
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top,
+        });
+        if (pinch.current && touches.current.size === 2) {
+          e.preventDefault();
+          e.stopPropagation();
+          const [a, b] = [...touches.current.values()],
+            initial = pinch.current;
+          const next = Math.max(
+              12,
+              Math.min(
+                180,
+                (initial.zoom * distance(a, b)) / Math.max(1, initial.distance),
+              ),
+            ),
+            world = toWorld(initial.mid, initial.pan, initial.zoom);
+          s.set({
+            zoom: next,
+            pan: {
+              x: (a.x + b.x) / 2 - world.x * next,
+              y: (a.y + b.y) / 2 - world.y * next,
+            },
+          });
+          suppressClick.current = true;
+        }
+      }}
+      onPointerUpCapture={(e) => {
+        touches.current.delete(e.pointerId);
+        if (touches.current.size < 2) pinch.current = null;
+      }}
+      onPointerCancel={(e) => {
+        touches.current.delete(e.pointerId);
+        pinch.current = null;
       }}
       onContextMenu={(e) => {
         e.preventDefault();
@@ -673,13 +792,46 @@ export default function PlanCanvas() {
         }}
         onClick={click}
         onTap={click as any}
-        onMouseDown={() => {
+        onMouseDown={(e) => {
+          if (s.tool === "select" && e.evt.shiftKey && !s.placing) {
+            const screen = stage.current!.getPointerPosition()!;
+            const id = hitTest(f, screen, p, z);
+            if (!id || f.rooms.some((r) => r.id === id)) {
+              marqueeStart.current = point();
+              setMarquee({ a: point(), b: point() });
+              return;
+            }
+          }
           setContext(null);
           suppressClick.current = false;
           if (["room", "wall", "measure"].includes(s.tool) && !start)
             dragOrigin.current = point();
         }}
         onMouseUp={() => {
+          if (marqueeStart.current) {
+            const a = marqueeStart.current,
+              b = point();
+            marqueeStart.current = null;
+            setMarquee(null);
+            if (distance(a, b) * z > 4) {
+              const ids = f.items
+                .filter(
+                  (i) =>
+                    !i.hidden &&
+                    corners(i).every(
+                      (c) =>
+                        c.x >= Math.min(a.x, b.x) &&
+                        c.x <= Math.max(a.x, b.x) &&
+                        c.y >= Math.min(a.y, b.y) &&
+                        c.y <= Math.max(a.y, b.y),
+                    ),
+                )
+                .map((i) => i.id);
+              s.set({ selected: [...new Set([...s.selected, ...ids])] });
+              suppressClick.current = true;
+              return;
+            }
+          }
           const a = dragOrigin.current;
           dragOrigin.current = null;
           const q = point();
@@ -691,6 +843,8 @@ export default function PlanCanvas() {
         }}
         onMouseMove={() => {
           const q = point();
+          if (marqueeStart.current)
+            setMarquee({ a: marqueeStart.current, b: q });
           if (s.tool !== "select" || s.placing) setCursor(q);
           if (Date.now() - lastCursorSent.current > 100) {
             lastCursorSent.current = Date.now();
@@ -729,7 +883,15 @@ export default function PlanCanvas() {
           const q = stage.current!.getPointerPosition()!;
           const next = Math.max(
             12,
-            Math.min(180, z * (e.evt.deltaY > 0 ? 0.92 : 1.08)),
+            Math.min(
+              180,
+              z *
+                (e.evt.ctrlKey
+                  ? Math.exp(-e.evt.deltaY * 0.01)
+                  : e.evt.deltaY > 0
+                    ? 0.92
+                    : 1.08),
+            ),
           );
           s.set({ zoom: next, pan: zoomAt(q, p, z, next) });
         }}
@@ -743,6 +905,7 @@ export default function PlanCanvas() {
             <FloorFill
               key={r.id}
               color={r.color}
+              material={r.material}
               tile={["tile", "marble", "terrazzo", "concrete"].includes(
                 r.material,
               )}
@@ -772,6 +935,10 @@ export default function PlanCanvas() {
               points={[w.a.x, w.a.y, w.b.x, w.b.y]}
               stroke={s.selected.includes(w.id) ? "#7a67e8" : w.color}
               strokeWidth={w.thickness}
+              shadowColor="#15243b"
+              shadowOpacity={s.planStyle === "realistic" ? 0.22 : 0}
+              shadowBlur={0.07}
+              shadowOffset={{ x: 0.035, y: 0.05 }}
               lineCap="square"
               hitStrokeWidth={w.thickness + 10 / z}
             />
@@ -1044,6 +1211,18 @@ export default function PlanCanvas() {
                 />
               ))}
             </Group>
+          )}
+          {marquee && (
+            <Rect
+              listening={false}
+              x={Math.min(marquee.a.x, marquee.b.x)}
+              y={Math.min(marquee.a.y, marquee.b.y)}
+              width={Math.abs(marquee.a.x - marquee.b.x)}
+              height={Math.abs(marquee.a.y - marquee.b.y)}
+              fill="#7565e822"
+              stroke="#7565e8"
+              strokeWidth={1 / z}
+            />
           )}
           <SelectionHandles />
           {s.tool === "select" &&

@@ -13,7 +13,14 @@ export const escapeXml = (s: string) =>
         "'": "&apos;",
       })[c]!,
   );
-export function furnitureSvg(key: string, color: string, w = 180, h = 140) {
+export function furnitureSvg(
+  key: string,
+  color: string,
+  w = 180,
+  h = 140,
+  realistic = true,
+  finish = "original",
+) {
   const entry = catalog.find((c) => c.id === key),
     kind = entry?.kind ?? (key as Kind);
   const v = entry?.variant ?? 0,
@@ -417,8 +424,21 @@ export function furnitureSvg(key: string, color: string, w = 180, h = 140) {
         rect(45, 5, 10, 28, "#a6b1ac", 2) +
         circle(50, 55, 5, "#a6b1ac");
   }
-  if(entry?.footprint==='sectional') body=`<defs><clipPath id="section"><path d="M0 0H100V100H65V55H0Z"/></clipPath></defs><g clip-path="url(#section)">${body}</g>`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 100 100" preserveAspectRatio="none">${body}</svg>`;
+  if (entry?.footprint === "sectional")
+    body = `<defs><clipPath id="section"><path d="M0 0H100V100H65V55H0Z"/></clipPath></defs><g clip-path="url(#section)">${body}</g>`;
+  if (!realistic)
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 100 100" preserveAspectRatio="none">${body.replace(/fill="[^"]*"/g, 'fill="none"')}</svg>`;
+  if (finish !== "original") {
+    const lines = Array.from({ length: 20 }, (_, i) =>
+      finish === "marble"
+        ? `<path d="M${i * 9} 0Q${i * 7} 50 ${i * 5} 100" stroke="#a3a398" stroke-width=".5" opacity=".2"/>`
+        : `<path d="M0 ${i * 5}H100${finish === "rattan" ? `M${i * 5} 0V100` : ""}" stroke="#fff" stroke-width="${finish === "boucle" ? 2 : 0.5}" opacity=".15"/>`,
+    ).join("");
+    body =
+      `<defs><pattern id="finish" width="100" height="100" patternUnits="userSpaceOnUse"><rect width="100" height="100" fill="${color}"/>${lines}</pattern></defs>` +
+      body.replaceAll(`fill="${color}"`, 'fill="url(#finish)"');
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 100 100" preserveAspectRatio="none"><defs><clipPath id="footprint">${entry?.footprint === "ellipse" ? '<ellipse cx="50" cy="50" rx="49" ry="49"/>' : entry?.footprint === "sectional" ? '<path d="M0 0H100V100H65V55H0Z"/>' : '<rect width="100" height="100"/>'}</clipPath><linearGradient id="depth" x2=".3" y2="1"><stop stop-color="#fff" stop-opacity=".30"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#142136" stop-opacity=".24"/></linearGradient><filter id="soft"><feDropShadow dx="1" dy="2" stdDeviation="1" flood-color="#172437" flood-opacity=".22"/></filter></defs><g filter="url(#soft)">${body}</g><rect x="2" y="2" width="96" height="96" rx="6" fill="url(#depth)" clip-path="url(#footprint)" pointer-events="none"/></svg>`;
 }
 export const svgData = (s: string) =>
   `data:image/svg+xml;charset=utf-8,${encodeURIComponent(s)}`;
@@ -477,7 +497,7 @@ export function planSvg(
     .filter((i) => !i.hidden)
     .map(
       (i) =>
-        `<g transform="translate(${i.x} ${i.y}) rotate(${i.rotation}) scale(${i.flipX ? -1 : 1} 1)"><image x="${-i.width / 2}" y="${-i.depth / 2}" width="${i.width}" height="${i.depth}" href="${svgData(furnitureSvg(i.catalogId, i.color))}"/></g>`,
+        `<g transform="translate(${i.x} ${i.y}) rotate(${i.rotation}) scale(${i.flipX ? -1 : 1} 1)"><image x="${-i.width / 2}" y="${-i.depth / 2}" width="${i.width}" height="${i.depth}" href="${svgData(furnitureSvg(i.catalogId, i.color, 180, 140, true, i.finish))}"/></g>`,
     )
     .join("");
   const labels = options.labels

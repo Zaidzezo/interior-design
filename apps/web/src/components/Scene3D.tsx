@@ -3,6 +3,8 @@ import { Suspense, useMemo, useRef, useState, useEffect } from "react";
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import {
   OrbitControls,
+  RoundedBox,
+  useTexture,
   TransformControls,
   Grid,
   Environment,
@@ -15,7 +17,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
 import { useEditor, activeFloor } from "@/lib/store";
 import { Item, Wall, Opening, Room } from "@core/model";
-import { getCatalog } from "@core/catalog";
+import { getCatalog, floorTexture } from "@core/catalog";
 import { distance } from "@core/geometry";
 import { wallPanels } from "@core/architecture";
 function Box({
@@ -25,6 +27,7 @@ function Box({
   roughness = 0.7,
   metalness = 0,
   opacity = 1,
+  map,
 }: {
   position?: [number, number, number];
   size?: [number, number, number];
@@ -32,18 +35,41 @@ function Box({
   roughness?: number;
   metalness?: number;
   opacity?: number;
+  map?: THREE.Texture;
 }) {
+  if (Math.min(...size) < 0.08)
+    return (
+      <mesh position={position} castShadow receiveShadow>
+        <boxGeometry args={size} />
+        <meshStandardMaterial
+          color={color}
+          map={map}
+          roughness={roughness}
+          metalness={metalness}
+          transparent={opacity < 1}
+          opacity={opacity}
+        />
+      </mesh>
+    );
   return (
-    <mesh position={position} castShadow receiveShadow>
-      <boxGeometry args={size} />
+    <RoundedBox
+      position={position}
+      args={size}
+      radius={Math.min(...size) * 0.12}
+      smoothness={2}
+      bevelSegments={1}
+      castShadow
+      receiveShadow
+    >
       <meshStandardMaterial
         color={color}
+        map={map}
         roughness={roughness}
         metalness={metalness}
         transparent={opacity < 1}
         opacity={opacity}
       />
-    </mesh>
+    </RoundedBox>
   );
 }
 function FurnitureModel({ item }: { item: Item }) {
@@ -61,7 +87,18 @@ function FurnitureModel({ item }: { item: Item }) {
     e: number,
     color = clr,
     key?: number,
-  ) => <Box key={key} position={[x, y, z]} size={[a, b, e]} color={color} />;
+  ) => (
+    <Box
+      key={key}
+      position={[x, y, z]}
+      size={[a, b, e]}
+      color={color}
+      roughness={
+        item.finish === "velvet" ? 0.92 : item.finish === "marble" ? 0.24 : 0.65
+      }
+      metalness={item.finish === "brass" ? 0.72 : 0}
+    />
+  );
   const legs = () =>
     [-1, 1].flatMap((x) =>
       [-1, 1].map((z) =>
@@ -343,41 +380,26 @@ function Object3D({
   );
 }
 function RoomMesh({ room }: { room: Room }) {
-  const texture = useMemo(() => {
-    const canvas = document.createElement("canvas");
-    canvas.width = 256;
-    canvas.height = 256;
-    const ctx = canvas.getContext("2d")!;
-    ctx.fillStyle = room.color;
-    ctx.fillRect(0, 0, 256, 256);
-    if (["tile", "marble", "terrazzo"].includes(room.material)) {
-      ctx.strokeStyle = "rgba(77,98,92,.18)";
-      ctx.lineWidth = 1.2;
-      ctx.strokeRect(0, 0, 128, 128);
-      ctx.strokeRect(128, 128, 128, 128);
-      ctx.strokeRect(128, 0, 128, 128);
-      ctx.strokeRect(0, 128, 128, 128);
-    } else {
-      for (let i = 0; i < 16; i++) {
-        ctx.fillStyle =
-          i % 3 === 0 ? "rgba(255,255,255,.08)" : "rgba(88,60,30,.04)";
-        ctx.fillRect(0, i * 16, 256, 16);
-        ctx.strokeStyle = "rgba(101,77,48,.16)";
-        ctx.beginPath();
-        ctx.moveTo(0, i * 16);
-        ctx.lineTo(256, i * 16);
-        ctx.moveTo(i % 2 ? 85 : 190, i * 16);
-        ctx.lineTo(i % 2 ? 85 : 190, i * 16 + 16);
-        ctx.stroke();
-      }
-    }
-    const t = new THREE.CanvasTexture(canvas);
-    t.wrapS = t.wrapT = THREE.RepeatWrapping;
-    t.repeat.set(0.65, 0.65);
-    t.colorSpace = THREE.SRGBColorSpace;
-    return t;
-  }, [room.color, room.material]);
-  useEffect(() => () => texture.dispose(), [texture]);
+  const materialId = floorTexture(room.material) ?? "oak";
+  const loaded = useTexture([
+    `/assets/materials/${materialId}-albedo.webp`,
+    `/assets/materials/${materialId}-normal.webp`,
+    `/assets/materials/${materialId}-roughness.webp`,
+  ]);
+  const maps = useMemo(
+    () =>
+      loaded.map((map, i) => {
+        const texture = map.clone();
+        texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(1 / 1.2, 1 / 1.2);
+        texture.colorSpace =
+          i === 0 ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+        texture.needsUpdate = true;
+        return texture;
+      }),
+    [loaded[0], loaded[1], loaded[2]],
+  );
+  useEffect(() => () => maps.forEach((t) => t.dispose()), [maps]);
   const shape = useMemo(() => {
     const s = new THREE.Shape();
     room.points.forEach((p, i) =>
@@ -389,7 +411,14 @@ function RoomMesh({ room }: { room: Room }) {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
       <shapeGeometry args={[shape]} />
-      <meshStandardMaterial map={texture} roughness={0.85} />
+      <meshStandardMaterial
+        color={room.color}
+        map={floorTexture(room.material) ? maps[0] : undefined}
+        normalMap={floorTexture(room.material) ? maps[1] : undefined}
+        normalScale={new THREE.Vector2(0.18, 0.18)}
+        roughnessMap={floorTexture(room.material) ? maps[2] : undefined}
+        roughness={room.material === "marble" ? 0.35 : 0.9}
+      />
     </mesh>
   );
 }
@@ -402,6 +431,17 @@ function WallMesh({
   openings: Opening[];
   cutaway: boolean;
 }) {
+  const source = useTexture(
+    `/assets/materials/${wall.finish === "paneling" ? "walnut" : wall.finish === "brick" ? "tile" : wall.finish === "wallpaper" ? "carpet" : "concrete"}-albedo.webp`,
+  );
+  const finishMap = useMemo(() => {
+    const t = source.clone();
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(3, 2);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }, [source]);
+  useEffect(() => () => finishMap.dispose(), [finishMap]);
   const length = distance(wall.a, wall.b),
     angle = -Math.atan2(wall.b.y - wall.a.y, wall.b.x - wall.a.x),
     height = cutaway ? Math.min(0.6, wall.height) : wall.height;
@@ -417,9 +457,31 @@ function WallMesh({
           key={i}
           position={[panel.x, panel.y, 0]}
           size={[panel.width, panel.height, wall.thickness]}
-          color={cutaway ? "#43566c" : "#e4e1d8"}
+          color={wall.color}
+          map={wall.finish && wall.finish !== "matte" ? finishMap : undefined}
         />
       ))}
+      {wallPanels(wall, openings, height)
+        .filter((p) => p.y - p.height / 2 < 0.01)
+        .map((panel, i) => (
+          <group key={`trim-${i}`}>
+            <Box
+              position={[panel.x, 0.045, wall.thickness / 2 + 0.012]}
+              size={[panel.width, 0.09, 0.024]}
+              color="#e9e5db"
+            />
+            <Box
+              position={[panel.x, 0.045, -wall.thickness / 2 - 0.012]}
+              size={[panel.width, 0.09, 0.024]}
+              color="#e9e5db"
+            />
+            <Box
+              position={[panel.x, height + 0.008, 0]}
+              size={[panel.width, 0.016, wall.thickness + 0.01]}
+              color={wall.color}
+            />
+          </group>
+        ))}
       {openings
         .filter((o) => o.kind === "window" && height > o.sill)
         .map((o) => (
