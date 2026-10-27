@@ -26,6 +26,8 @@ export type CatalogItem = {
   height: number;
   price: number;
   color: string;
+  footprint?: "rectangle" | "ellipse" | "sectional";
+  variant?: number;
 };
 const groups: [
   Kind,
@@ -353,8 +355,87 @@ export const catalog: CatalogItem[] = groups.flatMap(
       height: h,
       price: Math.round((w * d * 220 + g * 13) * (1 + i * 0.12)),
       color,
+      variant: i,
+      footprint: /round|stool|plant|lamp|bistro/i.test(name + " " + kind)
+        ? ("ellipse" as const)
+        : /sectional|corner workspace/.test(name.toLowerCase())
+          ? ("sectional" as const)
+          : ("rectangle" as const),
     })),
 );
+// Explicit sizes override family defaults; dimensions are meters.
+const sizes: Record<string, [number, number, number]> = {
+  "Linen three seat": [2.2, 0.95, 0.82],
+  "Bouclé loveseat": [1.5, 0.85, 0.78],
+  "Compact two seat": [1.65, 0.85, 0.8],
+  "Corner sectional": [2.9, 2.1, 0.85],
+  "King oak": [1.95, 2.2, 0.65],
+  "Double linen": [1.4, 2.05, 0.6],
+  "Single walnut": [0.95, 2.05, 0.55],
+  "Four person round": [1.1, 1.1, 0.75],
+  "Bistro table": [0.7, 0.7, 0.74],
+  "Coffee table": [1.1, 0.6, 0.42],
+  "Side table": [0.45, 0.45, 0.5],
+  "Kitchen stool": [0.38, 0.38, 0.65],
+  "Counter stool": [0.42, 0.42, 0.75],
+  "Tall wardrobe": [1.8, 0.6, 2.1],
+  "Double vanity": [1.4, 0.55, 0.85],
+};
+for (const c of catalog) {
+  const size = sizes[c.name];
+  if (size) [c.width, c.depth, c.height] = size;
+}
+for (const [id, name, kind, width, depth, height, category] of [
+  [
+    "office-task-chair",
+    "Office task chair",
+    "chair",
+    0.65,
+    0.65,
+    1.05,
+    "Office",
+  ],
+  [
+    "classroom-chair",
+    "Classroom stacking chair",
+    "chair",
+    0.45,
+    0.5,
+    0.8,
+    "Office",
+  ],
+  [
+    "classroom-desk",
+    "Classroom student desk",
+    "desk",
+    0.65,
+    0.5,
+    0.74,
+    "Office",
+  ],
+  [
+    "meeting-table",
+    "Eight person meeting table",
+    "table",
+    2.4,
+    1.1,
+    0.75,
+    "Office",
+  ],
+  ["entry-bench", "Slatted entry bench", "sofa", 1.2, 0.4, 0.45, "Living"],
+] as const)
+  catalog.push({
+    id,
+    name,
+    kind,
+    width,
+    depth,
+    height,
+    category,
+    color: "#b8aa90",
+    price: 180,
+    variant: catalog.length,
+  });
 export const getCatalog = (id: string) =>
   catalog.find((c) => c.id === id) ?? catalog[0];
 export const materials = [

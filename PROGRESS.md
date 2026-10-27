@@ -1,3 +1,7 @@
+# Latest editor bug fixes
+
+See [BUGFIXES.md](BUGFIXES.md) for the subsequent interaction, catalog, materials, wall and session fixes. The earlier implementation record below is historical. Source was subsequently committed and pushed to GitHub.
+
 # BuildSpace — current state and exact resumption
 
 Updated 2026-10-27. This is a substantial working implementation of the requested platform. **The complete first-product brief is not finished.** Do not describe the remaining requirements as out of scope or present the application as release-complete.

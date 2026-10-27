@@ -21,7 +21,11 @@ export async function api<T = any>(
     },
   });
   const b = await r.json();
-  if (!r.ok) throw new ApiError(b.error ?? "Request failed", r.status);
+  if (!r.ok) {
+    if (r.status === 401 && typeof window !== "undefined")
+      window.dispatchEvent(new Event("buildspace-session-expired"));
+    throw new ApiError(b.error ?? "Request failed", r.status);
+  }
   return b;
 }
 

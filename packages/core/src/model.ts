@@ -84,6 +84,7 @@ export const FloorSchema = z.object({
   height: positive,
   rooms: z.array(RoomSchema).max(300),
   walls: z.array(WallSchema).max(2000),
+  removedBoundaries: z.array(z.object({a:PointSchema,b:PointSchema})).max(2000).optional(),
   openings: z.array(OpeningSchema).max(1000),
   items: z.array(ItemSchema).max(2000),
   references: z.array(ReferenceSchema).max(5).default([]),

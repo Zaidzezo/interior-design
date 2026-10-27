@@ -6,13 +6,13 @@ test.describe("real PostgreSQL API", () => {
     request,
   }) => {
     const owner = await playwright.request.newContext({
-        baseURL: "http://127.0.0.1:3000",
+        baseURL: process.env.BASE_URL ?? "http://127.0.0.1:3000",
       }),
       viewer = await playwright.request.newContext({
-        baseURL: "http://127.0.0.1:3000",
+        baseURL: process.env.BASE_URL ?? "http://127.0.0.1:3000",
       }),
       stranger = await playwright.request.newContext({
-        baseURL: "http://127.0.0.1:3000",
+        baseURL: process.env.BASE_URL ?? "http://127.0.0.1:3000",
       });
     const email = `owner-${crypto.randomUUID()}@example.com`,
       viewerEmail = `viewer-${crypto.randomUUID()}@example.com`;

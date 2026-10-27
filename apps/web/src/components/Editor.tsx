@@ -44,6 +44,7 @@ import {
   Scan,
   Command,
 } from "lucide-react";
+import { useSession, sessionQuery, accountInitials } from "@/lib/session";
 import Sidebar from "./Sidebar";
 import Inspector from "./Inspector";
 import Dialogs, { DialogName } from "./Dialogs";
@@ -52,7 +53,7 @@ import { useCollaboration } from "@/lib/collaboration";
 import { api, ApiError } from "@/lib/api";
 import { area, analyze } from "@core/geometry";
 import { totalCost } from "@core/estimate";
-import {cloneItems} from "@core/commands";
+import { cloneItems } from "@core/commands";
 import { Scene, Item, uid } from "@core/model";
 const PlanCanvas = dynamic(() => import("./PlanCanvas"), {
   ssr: false,
@@ -83,6 +84,7 @@ export default function Editor() {
   );
 }
 function Workspace() {
+  const session = useSession();
   const s = useEditor();
   const [dialog, setDialog] = useState<DialogName>(null),
     [bootError, setBootError] = useState(""),
@@ -149,8 +151,12 @@ function Workspace() {
         s.load(p.scene, p.id, p.revision, true);
         return;
       }
-      const me = await api("auth/me");
-      if (!me.user) await api("auth/guest", { method: "POST", body: "{}" });
+      let me = await queryClient.fetchQuery({ ...sessionQuery, staleTime: 0 });
+      if (!me.user) {
+        await api("auth/guest", { method: "POST", body: "{}" });
+        me = await api("auth/me");
+        queryClient.setQueryData(["me"], me);
+      }
       const projects = await api<any[]>("projects");
       const last = localStorage.getItem("buildspace-project");
       let project;
@@ -185,6 +191,19 @@ function Workspace() {
     } catch (e) {
       setBootError(e instanceof Error ? e.message : "Unable to load project");
     }
+  }, []);
+  useEffect(() => {
+    const expired = () => {
+      queryClient.setQueryData(["me"], { user: null });
+      useEditor.getState().set({ readOnly: true });
+      setDialog("account");
+      setBootError(
+        "Your session expired. Sign in to continue; unsaved edits are retained.",
+      );
+    };
+    window.addEventListener("buildspace-session-expired", expired);
+    return () =>
+      window.removeEventListener("buildspace-session-expired", expired);
   }, []);
   useEffect(() => {
     if (!initialized.current) {
@@ -241,7 +260,9 @@ function Workspace() {
             const ids: string[] = [];
             st.commit((scene) => {
               const floor = scene.floors.find((f) => f.id === st.floorId)!;
-              const copies=cloneItems(clipboard.current,.5,.5);floor.items.push(...copies);ids.push(...copies.map(i=>i.id));
+              const copies = cloneItems(clipboard.current, 0.5, 0.5);
+              floor.items.push(...copies);
+              ids.push(...copies.map((i) => i.id));
             });
             st.set({ selected: ids });
           }
@@ -250,6 +271,28 @@ function Workspace() {
       }
       if (e.key.toLowerCase() === "r" && st.placing) {
         st.set({ placingRotation: (st.placingRotation + 15) % 360 });
+        return;
+      }
+      if (
+        e.key.startsWith("Arrow") &&
+        ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)
+      ) {
+        e.preventDefault();
+        const step = e.shiftKey ? 0.1 : 0.01;
+        st.commit((scene) => {
+          const f = scene.floors.find((f) => f.id === st.floorId)!;
+          for (const i of f.items)
+            if (st.selected.includes(i.id) && !i.locked) {
+              i.x +=
+                e.key === "ArrowRight"
+                  ? step
+                  : e.key === "ArrowLeft"
+                    ? -step
+                    : 0;
+              i.y +=
+                e.key === "ArrowDown" ? step : e.key === "ArrowUp" ? -step : 0;
+            }
+        });
         return;
       }
       if (e.key === "Delete" || e.key === "Backspace") {
@@ -424,7 +467,7 @@ function Workspace() {
             title="Account"
             onClick={() => setDialog("account")}
           >
-            JD
+            {accountInitials(session.data?.user?.name)}
           </button>
         </div>
       </header>

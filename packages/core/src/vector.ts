@@ -1,4 +1,4 @@
-import { getCatalog, Kind } from "./catalog";
+import { catalog, getCatalog, Kind } from "./catalog";
 import { Floor, Item } from "./model";
 import { bounds, distance, area } from "./geometry";
 export const escapeXml = (s: string) =>
@@ -13,7 +13,11 @@ export const escapeXml = (s: string) =>
         "'": "&apos;",
       })[c]!,
   );
-export function furnitureSvg(kind: Kind, color: string, w = 180, h = 140) {
+export function furnitureSvg(key: string, color: string, w = 180, h = 140) {
+  const entry = catalog.find((c) => c.id === key),
+    kind = entry?.kind ?? (key as Kind);
+  const v = entry?.variant ?? 0,
+    name = entry?.name.toLowerCase() ?? "";
   const stroke = "#514e46";
   const rect = (
     x: number,
@@ -179,6 +183,241 @@ export function furnitureSvg(kind: Kind, color: string, w = 180, h = 140) {
       line(50, 8, 50, 40) +
       line(50, 60, 50, 92);
   }
+  if (entry) {
+    const slats = (
+      count: number,
+      x: number,
+      y: number,
+      width: number,
+      height: number,
+    ) =>
+      Array.from({ length: count }, (_, i) =>
+        rect(x + (i * width) / count, y, width / count - 2, height, color, 2),
+      ).join("");
+    if (kind === "sofa") {
+      const seats = /two|loveseat/.test(name) ? 2 : /bench/.test(name) ? 4 : 3;
+      body =
+        rect(1, 1, 98, 52, color, 6) +
+        slats(seats, 10, 14, 80, 34) +
+        rect(1, 4, 8, 48, color, 3) +
+        rect(91, 4, 8, 48, color, 3);
+      if (entry.footprint === "sectional")
+        body +=
+          rect(66, 40, 33, 59, color, 6) + rect(71, 48, 23, 43, "#e8e5da", 4);
+      else
+        body =
+          body.replace(/height="52"/, 'height="98"') +
+          slats(seats, 10, 55, 80, 36);
+      body += Array.from({ length: (v % 4) + 1 }, (_, i) =>
+        rect(
+          14 + i * 19,
+          18,
+          12 + (v % 3),
+          13,
+          "#eee9df",
+          3,
+          `transform="rotate(${v * 5} ${20 + i * 19} 24)"`,
+        ),
+      ).join("");
+      if (/bench/.test(name))
+        body = rect(1, 1, 98, 98, "#8d7455", 2) + slats(7, 5, 4, 90, 92);
+    } else if (kind === "chair") {
+      if (/stool/.test(name))
+        body =
+          circle(50, 50, 46, color) +
+          circle(50, 50, 33, "#e8e1d3") +
+          line(18, 18, 82, 82) +
+          line(82, 18, 18, 82);
+      else if (/task/.test(name))
+        body =
+          Array.from(
+            { length: 5 },
+            (_, i) =>
+              `<path d="M50 55L50 96" transform="rotate(${i * 72} 50 55)" stroke="#5d6770" stroke-width="5"/>`,
+          ).join("") +
+          rect(20, 12, 60, 18, color, 7) +
+          rect(24, 35, 52, 43, color, 10) +
+          rect(10, 30, 8, 40, "#5d6770") +
+          rect(82, 30, 8, 40, "#5d6770");
+      else
+        body =
+          rect(9, 3, 82, 18, color, 3 + (v % 9)) +
+          rect(16, 29, 68, 60, color, 5 + (v % 12)) +
+          slats((v % 5) + 2, 15, 4, 70, 12) +
+          (/dining|classroom/.test(name)
+            ? ""
+            : rect(2, 25, 10, 65, color, 4) + rect(88, 25, 10, 65, color, 4));
+    } else if (kind === "bed") {
+      const pillows = /single|trundle/.test(name) ? 1 : 2;
+      body =
+        rect(2, 2, 96, 96, "#927456", v + 1) +
+        rect(7, 8, 86, 85, "#f4f0e6", 5) +
+        Array.from({ length: pillows }, (_, i) =>
+          rect(12 + i * 42, 12, pillows === 1 ? 76 : 34, 19, "#fffdf6", 3 + v),
+        ).join("") +
+        rect(8, 39, 84, 54, color, 2) +
+        Array.from({ length: v + 1 }, (_, i) =>
+          line(12, 48 + i * 6, 88, 48 + i * 6),
+        ).join("");
+    } else if (kind === "table" || kind === "desk") {
+      body =
+        entry.footprint === "ellipse"
+          ? circle(50, 50, 48, color)
+          : rect(2, 2, 96, 96, color, 2 + v * 2);
+      if (/nested/.test(name))
+        body = rect(2, 2, 67, 67, color, 4) + rect(49, 49, 49, 49, color, 4);
+      if (kind === "desk")
+        body +=
+          Array.from({ length: /dual/.test(name) ? 2 : 1 }, (_, i) =>
+            rect(20 + i * 35, 10, 32, 24, "#46596a", 2),
+          ).join("") +
+          rect(25, 44, 49, 13, "#ece8df", 2) +
+          circle(83, 50, 5, "#687b75") +
+          slats((v % 3) + 1, 6, 76, 25, 18);
+      else
+        body +=
+          Array.from({ length: (v % 5) + 1 }, (_, i) =>
+            circle(20 + i * 14, 45 + (i % 2) * 13, 4, "#e8decc"),
+          ).join("") + line(9, 15 + v * 3, 91, 15 + v * 3);
+    } else if (kind === "cabinet" || kind === "shelf" || kind === "fridge") {
+      const panels = (v % 5) + 1;
+      body =
+        rect(1, 1, 98, 98, color, 2) +
+        Array.from(
+          { length: panels },
+          (_, i) =>
+            rect(4 + (i * 92) / panels, 4, 92 / panels - 2, 91, color, 1) +
+            rect(8 + (i * 92) / panels, 43, 4, 14, "#665747", 1),
+        ).join("");
+      if (kind === "shelf")
+        body += slats(5 + v, 7, 8, 86, 65) + line(5, 76, 95, 76);
+      if (/island|prep|peninsula/.test(name))
+        body +=
+          rect(8, 12, 84, 62, "#e3ddce", 1) + circle(75, 45, 12, "#d2dcd6");
+    } else if (kind === "sink") {
+      const basins = /double/.test(name) ? 2 : 1;
+      body =
+        rect(1, 1, 98, 98, color, 2) +
+        Array.from(
+          { length: basins },
+          (_, i) =>
+            rect(
+              8 + i * 46,
+              20,
+              basins === 2 ? 39 : 84,
+              68,
+              "#e9eeeb",
+              5 + v * 3,
+            ) + circle(27 + i * 46, 66, 4, "#a6b1ac"),
+        ).join("") +
+        rect(44, 3, 8, 32, "#9faeac", 2) +
+        line(10, 10 + v, 90, 10 + v);
+    } else if (kind === "stove") {
+      body =
+        rect(1, 1, 98, 98, color, 3) +
+        Array.from(
+          { length: v === 3 ? 6 : 4 },
+          (_, i) =>
+            circle(
+              20 + (i % 2) * 55,
+              18 + Math.floor(i / 2) * 28,
+              10 + v,
+              "#354342",
+            ) +
+            circle(
+              20 + (i % 2) * 55,
+              18 + Math.floor(i / 2) * 28,
+              6,
+              "#82908c",
+            ),
+        ).join("") +
+        slats(4 + v, 12, 88, 76, 7);
+    } else if (kind === "plant") {
+      body =
+        circle(50, 50, 22, "#ac8866") +
+        Array.from(
+          { length: 5 + v },
+          (_, i) =>
+            `<ellipse cx="50" cy="28" rx="${6 + v}" ry="${19 + v}" fill="${color}" stroke="#53715c" transform="rotate(${(i * 360) / (5 + v)} 50 50)"/>`,
+        ).join("");
+    } else if (kind === "rug") {
+      body =
+        entry.footprint === "ellipse"
+          ? circle(50, 50, 49, color)
+          : rect(1, 1, 98, 98, color, 1);
+      body += Array.from(
+        { length: 5 + v },
+        (_, i) =>
+          `<path d="M${8 + i * 5} 10L${90 - i * 5} 10L${90 - i * 5} 90L${8 + i * 5} 90Z" fill="none" stroke="#807b70" stroke-width=".7"/>`,
+      ).join("");
+    } else if (kind === "lamp") {
+      body =
+        circle(50, 50, 43 - v * 3, color) +
+        Array.from(
+          { length: 3 + v },
+          (_, i) =>
+            `<path d="M50 50L50 8" transform="rotate(${(i * 360) / (3 + v)} 50 50)" stroke="#a08b62" stroke-width="2"/>`,
+        ).join("") +
+        circle(50, 50, 8, "#efe4c6");
+    } else {
+      // Family-specific fixtures retain their plumbing/treads; variants change physical details.
+      body += Array.from({ length: v + 1 }, (_, i) =>
+        rect(8 + i * 13, 5, 8, 4 + v * 2, "#a7b6b1", 1),
+      ).join("");
+      if (kind === "bath" && v > 0) body = rect(1, 1, 98, 98, color, 1) + body;
+      if (kind === "shower" && v === 1)
+        body += '<path d="M95 5L5 95" stroke="#82aaa6" stroke-width="5"/>';
+    }
+  }
+  if (entry) {
+    if (kind === "fridge")
+      body +=
+        rect(4, 82, 92, 14, "#c2ccc7", 1) +
+        Array.from({ length: 8 }, (_, i) =>
+          line(10 + i * 11, 84, 10 + i * 11, 94),
+        ).join("");
+    if (/dresser/.test(name))
+      body += Array.from({ length: 4 }, (_, i) =>
+        line(4, 18 + i * 22, 96, 18 + i * 22),
+      ).join("");
+    if (/vanity/.test(name))
+      body +=
+        rect(20, 18, 60, 60, "#edf0eb", 14) + circle(50, 60, 5, "#a6b1ac");
+    if (/media/.test(name)) body += rect(24, 18, 52, 48, "#35434a", 1);
+    if (/utility/.test(name)) body += line(2, 25, 98, 25) + line(2, 75, 98, 75);
+    if (/wardrobe/.test(name))
+      body += line(50, 3, 50, 97) + rect(44, 35, 4, 28, "#73624c", 1);
+    if (/rolling/.test(name))
+      body +=
+        circle(8, 8, 6, "#595e5b") +
+        circle(92, 8, 6, "#595e5b") +
+        circle(8, 92, 6, "#595e5b") +
+        circle(92, 92, 6, "#595e5b");
+    if (/low square/.test(name))
+      body += rect(8, 8, 84, 84, "none", 1) + line(8, 25, 92, 25);
+    if (/narrow console/.test(name))
+      body +=
+        rect(6, 72, 88, 22, "#bba386", 1) + rect(47, 81, 6, 3, "#665747", 1);
+    if (/round accent/.test(name))
+      body += circle(50, 50, 37, "none") + circle(50, 50, 28, "none");
+    if (/wall mounted/.test(name)) body += rect(2, 1, 96, 8, "#6d6b60", 1);
+    if (/drafting/.test(name))
+      body +=
+        rect(12, 12, 74, 60, "#f0e9d5", 1) +
+        line(20, 25, 75, 60) +
+        line(20, 60, 75, 25);
+    if (/children/.test(name))
+      body += rect(7, 65, 28, 24, "#c4cdbb", 2) + circle(21, 77, 5, "#e5e3d7");
+    if (/counter stool/.test(name))
+      body += circle(50, 50, 24, "none") + line(20, 50, 80, 50);
+    if (/pedestal/.test(name))
+      body =
+        circle(50, 45, 44, "#eff2ec") +
+        circle(50, 45, 31, "#d5dfd9") +
+        rect(45, 5, 10, 28, "#a6b1ac", 2) +
+        circle(50, 55, 5, "#a6b1ac");
+  }
+  if(entry?.footprint==='sectional') body=`<defs><clipPath id="section"><path d="M0 0H100V100H65V55H0Z"/></clipPath></defs><g clip-path="url(#section)">${body}</g>`;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 100 100" preserveAspectRatio="none">${body}</svg>`;
 }
 export const svgData = (s: string) =>
@@ -238,7 +477,7 @@ export function planSvg(
     .filter((i) => !i.hidden)
     .map(
       (i) =>
-        `<g transform="translate(${i.x} ${i.y}) rotate(${i.rotation}) scale(${i.flipX ? -1 : 1} 1)"><image x="${-i.width / 2}" y="${-i.depth / 2}" width="${i.width}" height="${i.depth}" href="${svgData(furnitureSvg(getCatalog(i.catalogId).kind, i.color))}"/></g>`,
+        `<g transform="translate(${i.x} ${i.y}) rotate(${i.rotation}) scale(${i.flipX ? -1 : 1} 1)"><image x="${-i.width / 2}" y="${-i.depth / 2}" width="${i.width}" height="${i.depth}" href="${svgData(furnitureSvg(i.catalogId, i.color))}"/></g>`,
     )
     .join("");
   const labels = options.labels

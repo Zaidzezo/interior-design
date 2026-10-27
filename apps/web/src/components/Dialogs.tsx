@@ -23,11 +23,12 @@ import {
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEditor, activeFloor } from "@/lib/store";
+import { useSession } from "@/lib/session";
 import { api } from "@/lib/api";
 import { importDxf } from "@core/dxf";
 import { templates, templateScene } from "@core/templates";
 import { sampleScene, blankScene } from "@core/sample";
-import {cloneItems} from "@core/commands";
+import { cloneItems } from "@core/commands";
 import { Scene, uid, SceneSchema } from "@core/model";
 import { estimate, totalCost } from "@core/estimate";
 import { analyze, area } from "@core/geometry";
@@ -861,7 +862,7 @@ function Settings() {
                   o.id = uid();
                   o.wallId = wallIds.get(o.wallId)!;
                 });
-                copy.items=cloneItems(copy.items);
+                copy.items = cloneItems(copy.items);
                 copy.annotations.forEach((a) => (a.id = uid()));
                 copy.references.forEach((r) => (r.id = uid()));
                 copy.name = `${floor.name} copy`;
@@ -967,10 +968,37 @@ function Account({ run }: { run: (f: () => Promise<void>) => void }) {
   const [email, setEmail] = useState(""),
     [password, setPassword] = useState(""),
     [name, setName] = useState("");
-  const { data } = useQuery<any>({
-    queryKey: ["me"],
-    queryFn: () => api("auth/me"),
-  });
+  const { data, isPending, isError, refetch } = useSession();
+  if (isPending) return <p role="status">Loading your account…</p>;
+  if (isError)
+    return (
+      <div role="alert">
+        Unable to load your account.{" "}
+        <button onClick={() => refetch()}>Retry</button>
+      </div>
+    );
+  const user = data?.user;
+  const registered = !!user && !user.email.endsWith("@buildspace.local");
+  if (user && registered)
+    return (
+      <section aria-label="Profile">
+        <h3>{user.name}</h3>
+        <p>{user.email}</p>
+        <p>You are signed in. Your projects are saved to this account.</p>
+        <button
+          className="delete-button"
+          onClick={() =>
+            run(async () => {
+              await api("auth/logout", { method: "POST", body: "{}" });
+              localStorage.removeItem("buildspace-project");
+              window.location.reload();
+            })
+          }
+        >
+          Sign out
+        </button>
+      </section>
+    );
   return (
     <>
       <p className="privacy-note">
@@ -1030,7 +1058,7 @@ function Account({ run }: { run: (f: () => Promise<void>) => void }) {
           ? "Already have an account? Sign in"
           : "New to BuildSpace? Create an account"}
       </button>
-      {data?.user && (
+      {registered && (
         <button
           className="delete-button"
           onClick={() =>

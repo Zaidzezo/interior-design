@@ -17,6 +17,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { useEditor, activeFloor } from "@/lib/store";
+import { useSession, accountInitials } from "@/lib/session";
 import { catalog, materials, Kind } from "@core/catalog";
 import { furnitureSvg, svgData, woodSvg } from "@core/vector";
 import { area } from "@core/geometry";
@@ -40,6 +41,7 @@ export default function Sidebar({
   onHelp: () => void;
   onAccount: () => void;
 }) {
+  const session = useSession();
   const s = useEditor();
   const f = activeFloor();
   const [search, setSearch] = useState(""),
@@ -252,7 +254,7 @@ export default function Sidebar({
                     }
                   >
                     <img
-                      src={svgData(furnitureSvg(c.kind, c.color))}
+                      src={svgData(furnitureSvg(c.id, c.color))}
                       alt={c.name}
                     />
                     <strong>{c.name}</strong>
@@ -368,7 +370,7 @@ export default function Sidebar({
       </div>
       <div className="sidebar-footer">
         <button className="avatar" title="Account" onClick={onAccount}>
-          LD
+          {accountInitials(session.data?.user?.name)}
         </button>
         <div>
           <strong>Your design workspace</strong>

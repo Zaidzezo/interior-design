@@ -36,6 +36,7 @@ import {
   unitFactor,
 } from "@core/geometry";
 import { totalCost } from "@core/estimate";
+import { editWall } from "@core/wall-edit";
 import { materials, getCatalog } from "@core/catalog";
 import { furnitureSvg, svgData } from "@core/vector";
 export function Numeric({
@@ -207,9 +208,7 @@ export default function Inspector({ onIssues }: { onIssues: () => void }) {
                 {item ? (
                   <img
                     alt=""
-                    src={svgData(
-                      furnitureSvg(getCatalog(item.catalogId).kind, item.color),
-                    )}
+                    src={svgData(furnitureSvg(item.catalogId, item.color))}
                   />
                 ) : room ? (
                   <Layers3 size={28} />
@@ -392,20 +391,12 @@ export default function Inspector({ onIssues }: { onIssues: () => void }) {
                         x: w.a.x + ((w.b.x - w.a.x) * len) / d,
                         y: w.a.y + ((w.b.y - w.a.y) * len) / d,
                       };
-                      const previous = { ...w.b };
-                      const floor = scene.floors.find(
-                        (f) => f.id === s.floorId,
-                      )!;
-                      const attached = floor.rooms.some((r) =>
-                        r.points.some((p) => distance(p, previous) < 1e-6),
+                      editWall(
+                        scene.floors.find((f) => f.id === s.floorId)!,
+                        id,
+                        w.a,
+                        endpoint,
                       );
-                      if (attached) {
-                        for (const room of floor.rooms)
-                          room.points = room.points.map((p) =>
-                            distance(p, previous) < 1e-6 ? { ...endpoint } : p,
-                          );
-                        rebuild(floor);
-                      } else w.b = endpoint;
                     }),
                   )}
                   {length("Wall thickness", wall.thickness, (thickness) =>

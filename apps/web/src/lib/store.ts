@@ -1,6 +1,6 @@
 "use client";
 import { create } from "zustand";
-import {cloneItems} from "@core/commands";
+import { cloneItems } from "@core/commands";
 import { Scene, Floor, Item, Room, Point, uid, SceneSchema } from "@core/model";
 import { sampleScene, rectangleRoom } from "@core/sample";
 import {
@@ -98,7 +98,12 @@ export const useEditor = create<State>((set, get) => {
     set: (patch) => set(patch),
     load: (scene, id, revision, readOnly = false) => {
       const parsed = SceneSchema.parse(scene);
-      if(typeof window!=="undefined"&&!readOnly&&new URLSearchParams(location.search).has("share"))history.replaceState(null,"",location.pathname);
+      if (
+        typeof window !== "undefined" &&
+        !readOnly &&
+        new URLSearchParams(location.search).has("share")
+      )
+        history.replaceState(null, "", location.pathname);
       if (typeof window !== "undefined" && !readOnly)
         localStorage.setItem("buildspace-project", id);
       set({
@@ -116,7 +121,10 @@ export const useEditor = create<State>((set, get) => {
       });
     },
     commit: (fn) => {
-      if(!get().projectId){set({message:"Opening your project…"});return}
+      if (!get().projectId) {
+        set({ message: "Opening your project…" });
+        return;
+      }
       if (get().readOnly) {
         set({ message: "This project is read-only" });
         return;
@@ -203,7 +211,7 @@ export const useEditor = create<State>((set, get) => {
         const f = s.floors.find((f) => f.rooms.some((r) => r.id === id));
         if (!f) return;
         Object.assign(f.rooms.find((r) => r.id === id)!, patch);
-        rebuild(f);
+        if (patch.points) rebuild(f);
       }),
     addItem: (catalogId, p) => {
       const c = getCatalog(catalogId);
@@ -263,11 +271,20 @@ export const useEditor = create<State>((set, get) => {
         f.rooms = f.rooms.filter((r) => !ids.includes(r.id));
         f.openings = f.openings.filter((o) => !ids.includes(o.id));
         f.annotations = f.annotations.filter((a) => !ids.includes(a.id));
+        f.references = f.references.filter(
+          (r) => !ids.includes(r.id) || r.locked,
+        );
         const removedWalls = f.walls.filter((w) => ids.includes(w.id));
         if (removedWalls.some((w) => f.openings.some((o) => o.wallId === w.id)))
           throw new Error(
             "Remove wall openings before deleting their host wall",
           );
+        f.removedBoundaries = [
+          ...(f.removedBoundaries ?? []),
+          ...removedWalls
+            .filter((w) => w.source === "room")
+            .map((w) => ({ a: { ...w.a }, b: { ...w.b } })),
+        ];
         f.walls = f.walls.filter((w) => !ids.includes(w.id));
         if (removedRooms) rebuild(f);
       });
@@ -278,7 +295,13 @@ export const useEditor = create<State>((set, get) => {
       const next: string[] = [];
       get().commit((s) => {
         const f = s.floors.find((f) => f.id === get().floorId)!;
-        const copies=cloneItems(f.items.filter(i=>ids.includes(i.id)),.4,.4);f.items.push(...copies);next.push(...copies.map(i=>i.id));
+        const copies = cloneItems(
+          f.items.filter((i) => ids.includes(i.id)),
+          0.4,
+          0.4,
+        );
+        f.items.push(...copies);
+        next.push(...copies.map((i) => i.id));
       });
       set({ selected: next });
     },
@@ -325,7 +348,14 @@ export function activeFloor() {
 export function rebuild(f: Floor) {
   const old = f.walls;
   f.walls = [
-    ...wallsFromRooms(f.rooms, old),
+    ...wallsFromRooms(f.rooms, old).filter(
+      (w) =>
+        !(f.removedBoundaries ?? []).some(
+          (edge) =>
+            wallProjection(w.a, edge).distance < 1e-6 &&
+            wallProjection(w.b, edge).distance < 1e-6,
+        ),
+    ),
     ...old.filter((w) => w.source === "manual"),
   ];
   for (const o of f.openings) {

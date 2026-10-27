@@ -20,6 +20,9 @@ import {
   Arc,
 } from "react-konva";
 import Konva from "konva";
+import { editWall } from "@core/wall-edit";
+import { hitTest, orderedItems, dragSnap } from "@core/hit-test";
+Konva.capturePointerEventsEnabled = true;
 import { useEditor, activeFloor, rebuild } from "@/lib/store";
 import { Point, Item, Reference, Opening, uid } from "@core/model";
 import {
@@ -45,6 +48,9 @@ function useSvg(svg: string) {
     const im = new window.Image();
     im.onload = () => setImage(im);
     im.src = svgData(svg);
+    return () => {
+      im.onload = null;
+    };
   }, [svg]);
   return image;
 }
@@ -53,13 +59,11 @@ function FloorFill({
   tile,
   points,
   selected,
-  onSelect,
 }: {
   color: string;
   tile: boolean;
   points: Point[];
   selected: boolean;
-  onSelect: (multi: boolean) => void;
 }) {
   const image = useSvg(woodSvg(color, tile));
   return (
@@ -72,68 +76,103 @@ function FloorFill({
       fillPriority={image ? "pattern" : "color"}
       stroke={selected ? "#7770ed" : undefined}
       strokeWidth={0.045}
-      onClick={(e) => onSelect(e.evt.shiftKey)}
-      onTap={() => onSelect(false)}
     />
   );
 }
 const Furniture = memo(function Furniture({ item }: { item: Item }) {
-  const { selected, select, tool, updateItem, snap: snapping } = useEditor();
+  const { selected, select, tool, snap: snapping } = useEditor();
   const ref = useRef<Konva.Group>(null);
-  const tr = useRef<Konva.Transformer>(null);
-  const image = useSvg(
-    furnitureSvg(getCatalog(item.catalogId).kind, item.color),
-  );
+  const image = useSvg(furnitureSvg(item.catalogId, item.color));
   const active = selected.includes(item.id);
-  useEffect(() => {
-    if (active && tr.current && ref.current) {
-      tr.current.nodes([ref.current]);
-      tr.current.getLayer()?.batchDraw();
-    }
-  }, [active]);
   if (item.hidden) return null;
   return (
     <>
       <Group
         ref={ref}
+        id={item.id}
         x={item.x}
         y={item.y}
         rotation={item.rotation}
         draggable={
           !item.locked && tool === "select" && !useEditor.getState().readOnly
         }
-        onClick={(e) => {
-          if (tool !== "select" || useEditor.getState().placing) return;
-          e.cancelBubble = true;
-          select(item.id, e.evt.shiftKey);
+        onDragStart={() => {
+          if (!useEditor.getState().selected.includes(item.id)) select(item.id);
         }}
-        onTap={(e) => {
-          if (useEditor.getState().placing) return;
-          e.cancelBubble = true;
-          select(item.id);
+        onDragMove={(e) => {
+          const st = useEditor.getState(),
+            result = dragSnap(
+              { x: e.target.x(), y: e.target.y() },
+              st.zoom,
+              st.snap,
+            );
+          e.target.position(result.point);
+          const dx = result.point.x - item.x,
+            dy = result.point.y - item.y;
+          for (const other of activeFloor().items)
+            if (
+              other.id !== item.id &&
+              !other.locked &&
+              (st.selected.includes(other.id) ||
+                (item.groupId && other.groupId === item.groupId))
+            )
+              e.target
+                .getStage()
+                ?.findOne("#" + other.id)
+                ?.position({ x: other.x + dx, y: other.y + dy });
+          window.dispatchEvent(
+            new CustomEvent("buildspace-snap", {
+              detail: { ...result, id: item.id },
+            }),
+          );
         }}
         onDragEnd={(e) => {
+          window.dispatchEvent(
+            new CustomEvent("buildspace-snap", { detail: null }),
+          );
           const n = e.target;
-          updateItem(item.id, {
-            x: snapping ? snap(n.x()) : n.x(),
-            y: snapping ? snap(n.y()) : n.y(),
+          const st = useEditor.getState(),
+            target = dragSnap({ x: n.x(), y: n.y() }, st.zoom, snapping).point;
+          const dx = target.x - item.x,
+            dy = target.y - item.y;
+          st.commit((scene) => {
+            const f = scene.floors.find((f) => f.id === st.floorId)!;
+            for (const i of f.items)
+              if (
+                !i.locked &&
+                (st.selected.includes(i.id) ||
+                  (item.groupId && i.groupId === item.groupId))
+              ) {
+                i.x += dx;
+                i.y += dy;
+              }
           });
-        }}
-        onTransformEnd={() => {
-          const n = ref.current!;
-          const w = Math.max(0.1, item.width * n.scaleX()),
-            d = Math.max(0.1, item.depth * n.scaleY());
-          n.scale({ x: 1, y: 1 });
-          updateItem(item.id, {
-            x: n.x(),
-            y: n.y(),
-            width: w,
-            depth: d,
-            rotation: n.rotation(),
-          });
+          const current = activeFloor();
+          for (const i of current.items)
+            n.getStage()
+              ?.findOne("#" + i.id)
+              ?.position({ x: i.x, y: i.y });
         }}
       >
         <KImage
+          hitFunc={(ctx, shape) => {
+            const c = getCatalog(item.catalogId),
+              w = item.width,
+              h = item.depth;
+            ctx.beginPath();
+            if (c.footprint === "ellipse")
+              ctx.ellipse(w / 2, h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
+            else if (c.footprint === "sectional") {
+              ctx.moveTo(0, 0);
+              ctx.lineTo(w, 0);
+              ctx.lineTo(w, h);
+              ctx.lineTo(w * 0.65, h);
+              ctx.lineTo(w * 0.65, h * 0.55);
+              ctx.lineTo(0, h * 0.55);
+              ctx.closePath();
+            } else ctx.rect(0, 0, w, h);
+            ctx.fillStrokeShape(shape);
+          }}
           image={image}
           scaleX={item.flipX ? -1 : 1}
           x={item.flipX ? item.width / 2 : -item.width / 2}
@@ -155,22 +194,6 @@ const Furniture = memo(function Furniture({ item }: { item: Item }) {
           listening={false}
         />
       </Group>
-      {active && !item.locked && tool === "select" && (
-        <Transformer
-          ref={tr}
-          flipEnabled={false}
-          keepRatio={false}
-          rotateEnabled
-          anchorSize={7}
-          borderStroke="#7362e6"
-          anchorStroke="#7362e6"
-          anchorFill="white"
-          borderStrokeWidth={1.2}
-          boundBoxFunc={(old, next) =>
-            next.width < 5 || next.height < 5 ? old : next
-          }
-        />
-      )}
     </>
   );
 });
@@ -181,6 +204,9 @@ function TraceImage({ reference }: { reference: Reference }) {
     const im = new window.Image();
     im.onload = () => setImage(im);
     im.src = reference.dataUrl;
+    return () => {
+      im.onload = null;
+    };
   }, [reference.dataUrl]);
   return (
     <KImage
@@ -191,12 +217,6 @@ function TraceImage({ reference }: { reference: Reference }) {
       height={reference.depth}
       opacity={reference.opacity}
       draggable={!reference.locked && s.tool === "select"}
-      onClick={(e) => {
-        if (s.tool === "select" && !s.placing) {
-          e.cancelBubble = true;
-          s.select(reference.id);
-        }
-      }}
       onDragEnd={(e) =>
         s.commit((scene) => {
           const r = scene.floors
@@ -290,7 +310,7 @@ function PlacementPreview({
   rotation: number;
 }) {
   const c = getCatalog(id);
-  const image = useSvg(furnitureSvg(c.kind, c.color));
+  const image = useSvg(furnitureSvg(c.id, c.color));
   return (
     <Group
       x={point.x}
@@ -352,7 +372,7 @@ export default function PlanCanvas() {
   const [start, setStart] = useState<Point | null>(null);
   const [cursor, setCursor] = useState<Point>({ x: 0, y: 0 });
   const dragOrigin = useRef<Point | null>(null);
-  const suppressClickUntil = useRef(0);
+  const suppressClick = useRef(false);
   const [dragPreview, setDragPreview] = useState<Point | null>(null);
   const drawStart = start ?? dragPreview;
   const [polygon, setPolygon] = useState<Point[]>([]);
@@ -364,6 +384,16 @@ export default function PlanCanvas() {
     () => new Set(analyze(f).map((i) => i.entityId)),
     [f],
   );
+  const [context, setContext] = useState<Point | null>(null);
+  const [guide, setGuide] = useState<{
+    point: Point;
+    guides: ("x" | "y")[];
+  } | null>(null);
+  useEffect(() => {
+    const listener = (e: Event) => setGuide((e as CustomEvent).detail);
+    window.addEventListener("buildspace-snap", listener);
+    return () => window.removeEventListener("buildspace-snap", listener);
+  }, []);
   const [space, setSpace] = useState(false);
   useLayoutEffect(() => {
     const ro = new ResizeObserver(([e]) =>
@@ -400,7 +430,12 @@ export default function PlanCanvas() {
   }, [s.tool]);
   useEffect(() => {
     function down(e: KeyboardEvent) {
-      if ((e.target as HTMLElement).matches("input,textarea,select")) return;
+      if (
+        document.querySelector('[role="dialog"]') ||
+        (e.target as HTMLElement).isContentEditable ||
+        (e.target as HTMLElement).matches("input,textarea,select")
+      )
+        return;
       if (e.code === "Space") {
         e.preventDefault();
         setSpace(true);
@@ -410,10 +445,11 @@ export default function PlanCanvas() {
         setPolygon([]);
         s.set({ placing: null, tool: "select" });
         s.select(null);
+        setContext(null);
       }
     }
-    function up() {
-      setSpace(false);
+    function up(e: KeyboardEvent) {
+      if (e.code === "Space") setSpace(false);
     }
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
@@ -426,7 +462,7 @@ export default function PlanCanvas() {
     const a = stage.current?.getPointerPosition();
     if (!a) return { x: 0, y: 0 };
     const w = toWorld(a, p, z);
-    return s.snap ? { x: snap(w.x), y: snap(w.y) } : w;
+    return s.tool !== "select" && s.snap ? { x: snap(w.x), y: snap(w.y) } : w;
   }
   function finish(start: Point, q: Point) {
     s.commit((scene) => {
@@ -478,7 +514,15 @@ export default function PlanCanvas() {
     setStart(null);
   }
   function click(e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) {
-    if (Date.now() < suppressClickUntil.current) return;
+    if (suppressClick.current) {
+      suppressClick.current = false;
+      return;
+    }
+    if (
+      e.target.getParent() instanceof Konva.Transformer ||
+      e.target instanceof Konva.Transformer
+    )
+      return;
     if (s.tool === "pan" || space) return;
     const q = point();
     if (s.placing) {
@@ -529,7 +573,12 @@ export default function PlanCanvas() {
       finish(start, q);
       return;
     }
-    if (e.target === e.target.getStage()) s.select(null);
+    const pointer = stage.current?.getPointerPosition();
+    if (pointer)
+      s.select(
+        hitTest(f, pointer, p, z),
+        "shiftKey" in e.evt && e.evt.shiftKey,
+      );
   }
   const grid = [];
   if (s.grid) {
@@ -562,6 +611,24 @@ export default function PlanCanvas() {
       ref={host}
       className={`plan-surface ${s.tool === "pan" || space ? "panning" : s.tool !== "select" || s.placing ? "drawing" : ""}`}
       data-testid="plan-canvas"
+      onPointerDownCapture={(e) => {
+        const target = e.target as HTMLElement;
+        if (target.tagName === "CANVAS") target.setPointerCapture(e.pointerId);
+      }}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        const rect = e.currentTarget.getBoundingClientRect();
+        const id = hitTest(
+          f,
+          { x: e.clientX - rect.left, y: e.clientY - rect.top },
+          p,
+          z,
+        );
+        s.select(id);
+        setContext(
+          id ? { x: e.clientX - rect.left, y: e.clientY - rect.top } : null,
+        );
+      }}
       onDragOver={(e) => e.preventDefault()}
       onDrop={(e) => {
         e.preventDefault();
@@ -595,13 +662,20 @@ export default function PlanCanvas() {
         x={p.x}
         y={p.y}
         draggable={s.tool === "pan" || space}
+        onDragMove={(e) => {
+          if (e.target === stage.current)
+            s.set({ pan: { x: e.target.x(), y: e.target.y() } });
+        }}
         onDragEnd={(e) => {
+          suppressClick.current = true;
           if (e.target === stage.current)
             s.set({ pan: { x: e.target.x(), y: e.target.y() } });
         }}
         onClick={click}
         onTap={click as any}
         onMouseDown={() => {
+          setContext(null);
+          suppressClick.current = false;
           if (["room", "wall", "measure"].includes(s.tool) && !start)
             dragOrigin.current = point();
         }}
@@ -612,12 +686,12 @@ export default function PlanCanvas() {
           if (a && distance(a, q) > 0.2) {
             finish(a, q);
             setDragPreview(null);
-            suppressClickUntil.current = Date.now() + 120;
+            suppressClick.current = true;
           }
         }}
         onMouseMove={() => {
           const q = point();
-          setCursor(q);
+          if (s.tool !== "select" || s.placing) setCursor(q);
           if (Date.now() - lastCursorSent.current > 100) {
             lastCursorSent.current = Date.now();
             window.dispatchEvent(
@@ -651,6 +725,7 @@ export default function PlanCanvas() {
         }}
         onWheel={(e) => {
           e.evt.preventDefault();
+          const { zoom: z, pan: p } = useEditor.getState();
           const q = stage.current!.getPointerPosition()!;
           const next = Math.max(
             12,
@@ -673,25 +748,32 @@ export default function PlanCanvas() {
               )}
               points={r.points}
               selected={s.selected.includes(r.id)}
-              onSelect={(multi) => {
-                if (s.tool === "select" && !s.placing) s.select(r.id, multi);
-              }}
             />
           ))}
           {f.walls.map((w) => (
             <Line
               key={w.id}
+              id={w.id}
+              draggable={s.tool === "select" && !s.readOnly}
+              onDragStart={() => s.select(w.id)}
+              onDragEnd={(e) => {
+                const dx = e.target.x(),
+                  dy = e.target.y();
+                e.target.position({ x: 0, y: 0 });
+                s.commit((scene) =>
+                  editWall(
+                    scene.floors.find((f) => f.id === s.floorId)!,
+                    w.id,
+                    { x: w.a.x + dx, y: w.a.y + dy },
+                    { x: w.b.x + dx, y: w.b.y + dy },
+                  ),
+                );
+              }}
               points={[w.a.x, w.a.y, w.b.x, w.b.y]}
               stroke={s.selected.includes(w.id) ? "#7a67e8" : w.color}
               strokeWidth={w.thickness}
               lineCap="square"
-              hitStrokeWidth={0.22}
-              onClick={(e) => {
-                if (s.tool === "select" && !s.placing) {
-                  e.cancelBubble = true;
-                  s.select(w.id);
-                }
-              }}
+              hitStrokeWidth={w.thickness + 10 / z}
             />
           ))}
           {f.openings.map((o) => {
@@ -706,12 +788,6 @@ export default function PlanCanvas() {
                 x={w.a.x + ((w.b.x - w.a.x) * o.offset) / len}
                 y={w.a.y + ((w.b.y - w.a.y) * o.offset) / len}
                 rotation={angle}
-                onClick={(e) => {
-                  if (s.tool === "select" && !s.placing) {
-                    e.cancelBubble = true;
-                    s.select(o.id);
-                  }
-                }}
               >
                 <Line
                   points={[0, 0, o.width, 0]}
@@ -749,15 +825,9 @@ export default function PlanCanvas() {
               </Group>
             );
           })}
-          {[...f.items]
-            .sort(
-              (a, b) =>
-                (getCatalog(a.catalogId).kind === "rug" ? -1 : 0) -
-                (getCatalog(b.catalogId).kind === "rug" ? -1 : 0),
-            )
-            .map((i) => (
-              <Furniture key={i.id} item={i} />
-            ))}
+          {orderedItems(f.items).map((i) => (
+            <Furniture key={i.id} item={i} />
+          ))}
           {s.labels &&
             f.rooms.map((r) => {
               const b = bounds(r.points);
@@ -839,7 +909,7 @@ export default function PlanCanvas() {
             </Group>
           )}
           {f.annotations.map((a) => (
-            <Group key={a.id} onClick={() => s.select(a.id)}>
+            <Group key={a.id}>
               <Line
                 points={[a.a.x, a.a.y, a.b.x, a.b.y]}
                 stroke="#7064d6"
@@ -947,7 +1017,113 @@ export default function PlanCanvas() {
             />
           )}
         </Layer>
+        <Layer>
+          {guide && (
+            <Group listening={false}>
+              {guide.guides.map((axis) => (
+                <Line
+                  key={axis}
+                  points={
+                    axis === "x"
+                      ? [
+                          guide.point.x,
+                          -p.y / z,
+                          guide.point.x,
+                          (size.h - p.y) / z,
+                        ]
+                      : [
+                          -p.x / z,
+                          guide.point.y,
+                          (size.w - p.x) / z,
+                          guide.point.y,
+                        ]
+                  }
+                  stroke="#9878ed"
+                  strokeWidth={1 / z}
+                  dash={[5 / z, 4 / z]}
+                />
+              ))}
+            </Group>
+          )}
+          <SelectionHandles />
+          {s.tool === "select" &&
+            !s.readOnly &&
+            f.walls
+              .filter((w) => s.selected.includes(w.id))
+              .flatMap((w) =>
+                (["a", "b"] as const).map((endpoint) => (
+                  <Circle
+                    key={w.id + endpoint}
+                    x={w[endpoint].x}
+                    y={w[endpoint].y}
+                    radius={6 / z}
+                    hitStrokeWidth={6 / z}
+                    fill="white"
+                    stroke="#7362e6"
+                    strokeWidth={1 / z}
+                    draggable
+                    onMouseEnter={() => {
+                      stage.current!.container().style.cursor = "crosshair";
+                    }}
+                    onMouseLeave={() => {
+                      stage.current!.container().style.cursor = "default";
+                    }}
+                    onDragEnd={(e) => {
+                      const q = { x: e.target.x(), y: e.target.y() };
+                      s.commit((scene) =>
+                        editWall(
+                          scene.floors.find((f) => f.id === s.floorId)!,
+                          w.id,
+                          endpoint === "a" ? q : w.a,
+                          endpoint === "b" ? q : w.b,
+                        ),
+                      );
+                    }}
+                    onClick={(e) => {
+                      e.cancelBubble = true;
+                    }}
+                  />
+                )),
+              )}
+        </Layer>
       </Stage>
+      {context && (
+        <div
+          role="menu"
+          style={{
+            position: "absolute",
+            left: context.x,
+            top: context.y,
+            zIndex: 30,
+            background: "white",
+            border: "1px solid #d3d8e2",
+            borderRadius: 8,
+            padding: 8,
+          }}
+        >
+          {(f.items.some((i) => s.selected.includes(i.id))
+            ? ["duplicate", "rotate", "lock", "front", "back", "delete"]
+            : ["delete"]
+          ).map((action) => (
+            <button
+              role="menuitem"
+              key={action}
+              onClick={() => {
+                s.action(action);
+                setContext(null);
+              }}
+              style={{
+                display: "block",
+                padding: 8,
+                width: "100%",
+                textAlign: "left",
+              }}
+            >
+              {action}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="canvas-status">
         <span className="live-dot" />
         {s.placing
@@ -963,4 +1139,67 @@ export default function PlanCanvas() {
       </div>
     </div>
   );
+}
+
+function SelectionHandles() {
+  const s = useEditor(),
+    tr = useRef<Konva.Transformer>(null);
+  useLayoutEffect(() => {
+    const stage = tr.current?.getStage();
+    if (!stage || !tr.current) return;
+    const items = activeFloor().items.filter(
+      (i) => s.selected.includes(i.id) && !i.locked && !i.hidden,
+    );
+    tr.current.nodes(
+      items
+        .map((i) => stage.findOne("#" + i.id))
+        .filter(Boolean) as Konva.Node[],
+    );
+    tr.current.getLayer()?.batchDraw();
+  }, [s.selected, s.scene, s.tool]);
+  return s.tool === "select" && !s.readOnly ? (
+    <Transformer
+      ref={tr}
+      onTransformEnd={() => {
+        const nodes = tr.current?.nodes() ?? [];
+        const patches = nodes.map((n) => ({
+          id: n.id(),
+          x: n.x(),
+          y: n.y(),
+          rotation: n.rotation(),
+          sx: n.scaleX(),
+          sy: n.scaleY(),
+        }));
+        for (const n of nodes) n.scale({ x: 1, y: 1 });
+        s.commit((scene) => {
+          for (const patch of patches) {
+            const i = scene.floors
+              .find((f) => f.id === s.floorId)!
+              .items.find((i) => i.id === patch.id);
+            if (i && !i.locked)
+              Object.assign(i, {
+                x: patch.x,
+                y: patch.y,
+                rotation: patch.rotation,
+                width: Math.max(0.1, i.width * patch.sx),
+                depth: Math.max(0.1, i.depth * patch.sy),
+              });
+          }
+        });
+      }}
+      flipEnabled={false}
+      keepRatio={false}
+      shiftBehavior="default"
+      centeredScaling={false}
+      anchorSize={12}
+      anchorStyleFunc={(anchor: Konva.Rect) => anchor.hitStrokeWidth(6)}
+      borderStroke="#7362e6"
+      anchorStroke="#7362e6"
+      anchorFill="white"
+      shouldOverdrawWholeArea={false}
+      boundBoxFunc={(old, next) =>
+        Math.abs(next.width) < 5 || Math.abs(next.height) < 5 ? old : next
+      }
+    />
+  ) : null;
 }

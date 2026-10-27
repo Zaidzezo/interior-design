@@ -181,15 +181,15 @@ export function openingValid(o: Opening, w: Wall, others: Opening[] = []) {
     )
   );
 }
-export function wallProjection(p: Point, w: Wall) {
+export function wallProjection(p: Point, w: Pick<Wall, "a" | "b">) {
   const len = distance(w.a, w.b),
-    dx = (w.b.x - w.a.x) / len,
-    dy = (w.b.y - w.a.y) / len;
+    dx = len ? (w.b.x - w.a.x) / len : 0,
+    dy = len ? (w.b.y - w.a.y) / len : 0;
   const t = Math.max(0, Math.min(len, (p.x - w.a.x) * dx + (p.y - w.a.y) * dy));
   return {
     offset: t,
     point: { x: w.a.x + t * dx, y: w.a.y + t * dy },
-    distance: Math.abs((p.x - w.a.x) * dy - (p.y - w.a.y) * dx),
+    distance: Math.hypot(p.x - (w.a.x + t * dx), p.y - (w.a.y + t * dy)),
   };
 }
 export type Issue = {
