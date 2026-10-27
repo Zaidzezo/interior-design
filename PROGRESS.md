@@ -1,3 +1,7 @@
+# Latest Stage 1 controls repair
+
+See [STAGE1-CONTROLS.md](STAGE1-CONTROLS.md) for the reproduced low-zoom control failure, pointer-captured controls and test evidence. Stage 2 has not started; the user explicitly requires approval of its plan first.
+
 # Latest material studio update
 
 See [PRESENTATION-UPGRADE.md](PRESENTATION-UPGRADE.md) for recent furniture, material/view controls, profile plans, marquee selection and the network-blocked procedural asset fallback. This does not complete photorealistic imported assets.

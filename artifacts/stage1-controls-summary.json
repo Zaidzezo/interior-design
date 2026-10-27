@@ -1,0 +1,49 @@
+{
+  "stage": 1,
+  "stage2_started": false,
+  "baseline_before_fix": {
+    "status": "failed",
+    "expected": "top-left corner increases width and depth",
+    "actual_width": 0.7999999999999988,
+    "starting_width": 0.8
+  },
+  "matrix": {
+    "command": "BASE_URL=http://127.0.0.1:3030 pnpm exec playwright test tests/e2e/controls.spec.ts --reporter=list",
+    "zoom_targets_px_per_meter": [
+      12,
+      75,
+      180
+    ],
+    "rotations_degrees": [
+      0,
+      33,
+      90
+    ],
+    "resize_handles_per_configuration": 8,
+    "resize_gestures_passed": 72,
+    "configurations_passed": 9,
+    "note": "Middle zoom is the first wheel step at or above 75px/m."
+  },
+  "browser_runs": [
+    {
+      "scope": "complete controls file, including native body-drag following",
+      "passed": 12,
+      "failed": 0
+    },
+    {
+      "scope": "existing browser/API suite plus small-object and move/rotate cases, excluding matrix",
+      "passed": 14,
+      "failed": 0
+    },
+    {
+      "scope": "final low-zoom baseline and two matrix cases with control/pointer alignment assertions",
+      "passed": 3,
+      "failed": 0
+    }
+  ],
+  "initial_attempt_note": "One earlier run timed out at initial page readiness; the low-zoom case passed on subsequent warm runs without changing timeouts.",
+  "unit_tests_passed": 39,
+  "manual_remaining": [
+    "Physical touchscreen/stylus acceptance on the user device."
+  ]
+}

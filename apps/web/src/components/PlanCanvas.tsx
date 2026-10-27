@@ -15,11 +15,11 @@ import {
   Line,
   Text,
   Image as KImage,
-  Transformer,
   Circle,
   Arc,
 } from "react-konva";
 import Konva from "konva";
+import SelectionControls from "./SelectionControls";
 import { editWall } from "@core/wall-edit";
 import { hitTest, orderedItems, dragSnap } from "@core/hit-test";
 Konva.capturePointerEventsEnabled = true;
@@ -71,7 +71,7 @@ function FloorFill({
   const [texture, setTexture] = useState<HTMLImageElement>();
   const style = useEditor((s) => s.planStyle);
   useEffect(() => {
-    let active=true;
+    let active = true;
     setTexture(undefined);
     const id = floorTexture(material);
     if (!id || style === "blueprint") return;
@@ -86,12 +86,14 @@ function FloorFill({
       ctx.globalAlpha = 0.35;
       ctx.fillRect(0, 0, 256, 256);
       const tinted = new window.Image();
-      tinted.onload = () => { if(active)setTexture(tinted); };
+      tinted.onload = () => {
+        if (active) setTexture(tinted);
+      };
       tinted.src = canvas.toDataURL();
     };
     image.src = `/assets/materials/${id}-albedo.webp`;
     return () => {
-      active=false;
+      active = false;
       image.onload = null;
     };
   }, [material, style, color]);
@@ -434,6 +436,32 @@ export default function PlanCanvas() {
   const [polygon, setPolygon] = useState<Point[]>([]);
   const s = useEditor();
   const f = activeFloor();
+  useEffect(() => {
+    const node = host.current;
+    if (!node) return;
+    const wheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (node.dataset.transforming === "true") return;
+      const { zoom, pan } = useEditor.getState(),
+        rect = node.getBoundingClientRect(),
+        q = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      const next = Math.max(
+        12,
+        Math.min(
+          180,
+          zoom *
+            (e.ctrlKey
+              ? Math.exp(-e.deltaY * 0.01)
+              : e.deltaY > 0
+                ? 0.92
+                : 1.08),
+        ),
+      );
+      useEditor.getState().set({ zoom: next, pan: zoomAt(q, pan, zoom, next) });
+    };
+    node.addEventListener("wheel", wheel, { passive: false });
+    return () => node.removeEventListener("wheel", wheel);
+  }, []);
   const z = s.zoom,
     p = s.pan;
   const problemIds = useMemo(
@@ -670,13 +698,20 @@ export default function PlanCanvas() {
       ref={host}
       className={`plan-surface ${s.tool === "pan" || space ? "panning" : s.tool !== "select" || s.placing ? "drawing" : ""}`}
       data-testid="plan-canvas"
+      data-zoom={z}
+      data-pan-x={p.x}
+      data-pan-y={p.y}
       role="application"
       aria-label="Floor plan canvas. Shift drag for marquee, Space drag to pan, pinch to zoom."
       tabIndex={0}
       onPointerDownCapture={(e) => {
         const target = e.target as HTMLElement;
         if (target.tagName === "CANVAS") target.setPointerCapture(e.pointerId);
-        if (e.pointerType !== "touch") return;
+        if (
+          e.currentTarget.dataset.transforming === "true" ||
+          e.pointerType !== "touch"
+        )
+          return;
         const rect = e.currentTarget.getBoundingClientRect();
         touches.current.set(e.pointerId, {
           x: e.clientX - rect.left,
@@ -876,24 +911,6 @@ export default function PlanCanvas() {
             });
             setPolygon([]);
           }
-        }}
-        onWheel={(e) => {
-          e.evt.preventDefault();
-          const { zoom: z, pan: p } = useEditor.getState();
-          const q = stage.current!.getPointerPosition()!;
-          const next = Math.max(
-            12,
-            Math.min(
-              180,
-              z *
-                (e.evt.ctrlKey
-                  ? Math.exp(-e.evt.deltaY * 0.01)
-                  : e.evt.deltaY > 0
-                    ? 0.92
-                    : 1.08),
-            ),
-          );
-          s.set({ zoom: next, pan: zoomAt(q, p, z, next) });
         }}
       >
         <Layer>
@@ -1224,7 +1241,7 @@ export default function PlanCanvas() {
               strokeWidth={1 / z}
             />
           )}
-          <SelectionHandles />
+
           {s.tool === "select" &&
             !s.readOnly &&
             f.walls
@@ -1266,6 +1283,7 @@ export default function PlanCanvas() {
               )}
         </Layer>
       </Stage>
+      <SelectionControls stage={stage} />
       {context && (
         <div
           role="menu"
@@ -1318,67 +1336,4 @@ export default function PlanCanvas() {
       </div>
     </div>
   );
-}
-
-function SelectionHandles() {
-  const s = useEditor(),
-    tr = useRef<Konva.Transformer>(null);
-  useLayoutEffect(() => {
-    const stage = tr.current?.getStage();
-    if (!stage || !tr.current) return;
-    const items = activeFloor().items.filter(
-      (i) => s.selected.includes(i.id) && !i.locked && !i.hidden,
-    );
-    tr.current.nodes(
-      items
-        .map((i) => stage.findOne("#" + i.id))
-        .filter(Boolean) as Konva.Node[],
-    );
-    tr.current.getLayer()?.batchDraw();
-  }, [s.selected, s.scene, s.tool]);
-  return s.tool === "select" && !s.readOnly ? (
-    <Transformer
-      ref={tr}
-      onTransformEnd={() => {
-        const nodes = tr.current?.nodes() ?? [];
-        const patches = nodes.map((n) => ({
-          id: n.id(),
-          x: n.x(),
-          y: n.y(),
-          rotation: n.rotation(),
-          sx: n.scaleX(),
-          sy: n.scaleY(),
-        }));
-        for (const n of nodes) n.scale({ x: 1, y: 1 });
-        s.commit((scene) => {
-          for (const patch of patches) {
-            const i = scene.floors
-              .find((f) => f.id === s.floorId)!
-              .items.find((i) => i.id === patch.id);
-            if (i && !i.locked)
-              Object.assign(i, {
-                x: patch.x,
-                y: patch.y,
-                rotation: patch.rotation,
-                width: Math.max(0.1, i.width * patch.sx),
-                depth: Math.max(0.1, i.depth * patch.sy),
-              });
-          }
-        });
-      }}
-      flipEnabled={false}
-      keepRatio={false}
-      shiftBehavior="default"
-      centeredScaling={false}
-      anchorSize={12}
-      anchorStyleFunc={(anchor: Konva.Rect) => anchor.hitStrokeWidth(6)}
-      borderStroke="#7362e6"
-      anchorStroke="#7362e6"
-      anchorFill="white"
-      shouldOverdrawWholeArea={false}
-      boundBoxFunc={(old, next) =>
-        Math.abs(next.width) < 5 || Math.abs(next.height) < 5 ? old : next
-      }
-    />
-  ) : null;
 }
