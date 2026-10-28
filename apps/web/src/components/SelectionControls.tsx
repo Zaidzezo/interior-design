@@ -34,8 +34,10 @@ type Gesture = {
 const handles = [...Object.keys(resizeHandles), "rotate", "move"] as Handle[];
 export default function SelectionControls({
   stage,
+  renderer,
 }: {
-  stage: React.RefObject<Konva.Stage | null>;
+  stage?: React.RefObject<Konva.Stage | null>;
+  renderer?: {preview:(items:Item[],original:Item[])=>void};
 }) {
   const s = useEditor(),
     gesture = useRef<Gesture | null>(null),
@@ -45,9 +47,10 @@ export default function SelectionControls({
   );
   const current = preview ?? items;
   function show(list: Item[], original: Item[]) {
+    if(renderer){renderer.preview(list,original);return;}
     for (const i of list) {
       const old = original.find((o) => o.id === i.id);
-      stage.current?.findOne("#" + i.id)?.setAttrs({
+      stage?.current?.findOne("#" + i.id)?.setAttrs({
         x: i.x,
         y: i.y,
         rotation: i.rotation,
@@ -55,7 +58,7 @@ export default function SelectionControls({
         scaleY: old ? i.depth / old.depth : 1,
       });
     }
-    stage.current?.batchDraw();
+    stage?.current?.batchDraw();
   }
   function finish(commit: boolean) {
     const g = gesture.current;
@@ -96,7 +99,7 @@ export default function SelectionControls({
   }
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
-      if (e.key === "Escape") finish(false);
+      if (e.key === "Escape" && gesture.current) {e.stopImmediatePropagation();finish(false);}
     };
     const blur = () => finish(false);
     window.addEventListener("keydown", key, true);
@@ -128,6 +131,7 @@ export default function SelectionControls({
     const follow = (event: Event) => {
       if (gesture.current) return;
       const detail = (event as CustomEvent).detail;
+      if(detail?.items){setPreview(detail.items);return;}
       if (!detail?.id) {
         setPreview(null);
         return;
@@ -138,7 +142,7 @@ export default function SelectionControls({
       );
       setPreview(
         selected.map((i) => {
-          const node = stage.current?.findOne("#" + i.id);
+          const node = stage?.current?.findOne("#" + i.id);
           return node ? { ...i, x: node.x(), y: node.y() } : i;
         }),
       );

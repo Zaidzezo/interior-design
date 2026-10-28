@@ -12,7 +12,7 @@ import {
   sessionHash,
 } from "@/lib/auth";
 import { SceneSchema } from "@core/model";
-import { templateScene } from "@core/templates";
+import { templateScene, templates } from "@core/templates";
 import { blankScene, sampleScene } from "@core/sample";
 import { analyze } from "@core/geometry";
 import { estimate } from "@core/estimate";
@@ -178,17 +178,7 @@ async function handler(
           .object({
             name: z.string().min(1).max(100),
             template: z
-              .enum([
-                "sample",
-                "blank",
-                "studio",
-                "one-bedroom",
-                "two-bedroom",
-                "family",
-                "office",
-                "workplace",
-                "open-plan",
-              ])
+              .enum(["blank",...templates.map(t=>t.id)] as [string,...string[]])
               .optional(),
             scene: SceneSchema.optional(),
           })

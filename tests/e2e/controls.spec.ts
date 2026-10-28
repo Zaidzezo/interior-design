@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+test.beforeEach(async({page})=>{await page.addInitScript(()=>localStorage.setItem('buildspace-view','2D'));});
 import { blankScene, sampleScene } from "../../packages/core/src/sample";
 import { catalog } from "../../packages/core/src/catalog";
 test("small object corner handles remain independently reachable at low zoom", async ({

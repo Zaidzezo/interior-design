@@ -1,5 +1,5 @@
 "use client";
-import { Suspense, useMemo, useRef, useState, useEffect } from "react";
+import { Suspense, useMemo, useRef, useState, useEffect, useCallback, useLayoutEffect } from "react";
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import {
   OrbitControls,
@@ -19,6 +19,16 @@ import { useEditor, activeFloor } from "@/lib/store";
 import { Item, Wall, Opening, Room } from "@core/model";
 import { getCatalog, floorTexture } from "@core/catalog";
 import { distance } from "@core/geometry";
+import {StudioPointer,itemPointer} from './StudioPointer';
+import {InstancedAsset} from './InstancedAsset';
+import {StudioContext,useStudio} from './studio-context';
+import {StudioCamera} from './StudioCamera';
+import {GroundInteraction,groundEvent} from './GroundInteraction';
+import {StudioEffects} from './StudioEffects';
+import SelectionControls from './SelectionControls';
+import {dragSnap} from '@core/hit-test';
+import {bounds,corners,zoomAt} from '@core/geometry';
+import { ModelAsset } from "./ModelAsset";
 import { wallPanels } from "@core/architecture";
 function Box({
   position = [0, 0, 0],
@@ -28,6 +38,8 @@ function Box({
   metalness = 0,
   opacity = 1,
   map,
+  normalMap,
+  roughnessMap,
 }: {
   position?: [number, number, number];
   size?: [number, number, number];
@@ -36,6 +48,8 @@ function Box({
   metalness?: number;
   opacity?: number;
   map?: THREE.Texture;
+  normalMap?: THREE.Texture;
+  roughnessMap?: THREE.Texture;
 }) {
   if (Math.min(...size) < 0.08)
     return (
@@ -43,7 +57,7 @@ function Box({
         <boxGeometry args={size} />
         <meshStandardMaterial
           color={color}
-          map={map}
+          map={map} normalMap={normalMap} roughnessMap={roughnessMap} normalScale={new THREE.Vector2(.12,.12)}
           roughness={roughness}
           metalness={metalness}
           transparent={opacity < 1}
@@ -63,7 +77,7 @@ function Box({
     >
       <meshStandardMaterial
         color={color}
-        map={map}
+        map={map} normalMap={normalMap} roughnessMap={roughnessMap} normalScale={new THREE.Vector2(.12,.12)}
         roughness={roughness}
         metalness={metalness}
         transparent={opacity < 1}
@@ -72,314 +86,22 @@ function Box({
     </RoundedBox>
   );
 }
-function FurnitureModel({ item }: { item: Item }) {
-  const c = getCatalog(item.catalogId),
-    w = item.width,
-    d = item.depth,
-    h = item.height,
-    clr = item.color;
-  const box = (
-    x: number,
-    y: number,
-    z: number,
-    a: number,
-    b: number,
-    e: number,
-    color = clr,
-    key?: number,
-  ) => (
-    <Box
-      key={key}
-      position={[x, y, z]}
-      size={[a, b, e]}
-      color={color}
-      roughness={
-        item.finish === "velvet" ? 0.92 : item.finish === "marble" ? 0.24 : 0.65
-      }
-      metalness={item.finish === "brass" ? 0.72 : 0}
-    />
-  );
-  const legs = () =>
-    [-1, 1].flatMap((x) =>
-      [-1, 1].map((z) =>
-        box(
-          x * w * 0.4,
-          h * 0.35,
-          z * d * 0.36,
-          0.045,
-          h * 0.7,
-          0.045,
-          "#8a6a49",
-          x * 2 + z,
-        ),
-      ),
-    );
-  if (c.kind === "rug") return box(0, 0.012, 0, w, 0.024, d);
-  if (c.kind === "stairs")
-    return (
-      <>
-        {Array.from({ length: 12 }, (_, i) =>
-          box(
-            0,
-            ((i + 1) * h) / 24,
-            -d / 2 + ((i + 0.5) * d) / 12,
-            w,
-            ((i + 1) * h) / 12,
-            d / 12,
-            clr,
-            i,
-          ),
-        )}
-      </>
-    );
-  if (c.kind === "bed")
-    return (
-      <>
-        {box(0, 0.17, 0, w, 0.34, d, "#9c7c58")}
-        {box(0, 0.43, 0, w * 0.96, 0.22, d * 0.94, "#eeeae1")}
-        {box(0, 0.59, d * 0.12, w * 0.98, 0.14, d * 0.65)}
-        {box(0, 0.52, -d * 0.48, w, 0.9, 0.1, "#a18a70")}
-        {[-1, 1].map((x) =>
-          box(
-            x * w * 0.24,
-            0.59,
-            -d * 0.28,
-            w * 0.42,
-            0.16,
-            d * 0.2,
-            "#faf8f0",
-            x,
-          ),
-        )}
-      </>
-    );
-  if (c.kind === "sofa" || c.kind === "chair")
-    return (
-      <>
-        {box(0, 0.22, 0, w, 0.35, d)}
-        {box(0, 0.56, -d * 0.4, w, 0.6, d * 0.18)}
-        {[-1, 1].map((x) =>
-          box(x * w * 0.45, 0.45, 0, w * 0.1, 0.55, d, clr, x),
-        )}
-        {Array.from({ length: c.kind === "sofa" ? 3 : 1 }, (_, i) =>
-          box(
-            (i - (c.kind === "sofa" ? 1 : 0)) * w * 0.27,
-            0.45,
-            0,
-            w * (c.kind === "sofa" ? 0.25 : 0.7),
-            0.16,
-            d * 0.7,
-            "#e6e0d3",
-            i,
-          ),
-        )}
-      </>
-    );
-  if (c.kind === "table" || c.kind === "desk")
-    return (
-      <>
-        {legs()}
-        {box(0, h - 0.05, 0, w, 0.1, d)}
-        {c.kind === "desk" && (
-          <>
-            {box(0, h + 0.2, -d * 0.23, w * 0.36, 0.4, 0.04, "#35404b")}
-            {box(0, h + 0.02, d * 0.1, w * 0.4, 0.02, d * 0.18, "#c4c7be")}
-          </>
-        )}
-      </>
-    );
-  if (c.kind === "plant")
-    return (
-      <>
-        <mesh position={[0, 0.2, 0]} castShadow>
-          <cylinderGeometry args={[w * 0.3, w * 0.23, 0.4, 16]} />
-          <meshStandardMaterial color="#b39679" />
-        </mesh>
-        <mesh position={[0, h * 0.5, 0]}>
-          <cylinderGeometry args={[0.02, 0.03, h * 0.7, 8]} />
-          <meshStandardMaterial color="#675f46" />
-        </mesh>
-        {Array.from({ length: 7 }, (_, i) => (
-          <mesh
-            key={i}
-            position={[
-              Math.cos(i * 2.4) * w * 0.22,
-              h * (0.48 + i * 0.065),
-              Math.sin(i * 2.4) * d * 0.22,
-            ]}
-            scale={[w * 0.5, h * 0.15, d * 0.3]}
-            rotation={[0, i, Math.sin(i)]}
-            castShadow
-          >
-            <sphereGeometry args={[1, 10, 8]} />
-            <meshStandardMaterial color={i % 2 ? "#8fa17d" : "#58785d"} />
-          </mesh>
-        ))}
-      </>
-    );
-  if (c.kind === "lamp")
-    return (
-      <>
-        <mesh position={[0, 0.03, 0]}>
-          <cylinderGeometry args={[w * 0.38, w * 0.4, 0.06, 20]} />
-          <meshStandardMaterial color="#a18b64" />
-        </mesh>
-        {box(0, h * 0.42, 0, 0.035, h * 0.84, 0.035, "#a18b64")}
-        <mesh position={[0, h * 0.85, 0]}>
-          <coneGeometry args={[w * 0.5, h * 0.25, 20, 1, true]} />
-          <meshStandardMaterial color="#ead9b4" side={THREE.DoubleSide} />
-        </mesh>
-        <pointLight
-          position={[0, h * 0.75, 0]}
-          intensity={3}
-          distance={5}
-          color="#ffdfa8"
-        />
-      </>
-    );
-  if (c.kind === "bath")
-    return (
-      <>
-        {box(0, h * 0.4, 0, w, h * 0.8, d, "#f3f4ec")}
-        {box(0, h * 0.82, 0, w * 0.8, 0.02, d * 0.78, "#c9dedb")}
-        {[-1, 1].map((x) =>
-          box(x * w * 0.45, h * 0.85, 0, w * 0.1, 0.16, d, "#f7f6ee", x),
-        )}
-        {[-1, 1].map((z) =>
-          box(0, h * 0.85, z * d * 0.45, w, 0.16, d * 0.1, "#f7f6ee", z + 4),
-        )}
-      </>
-    );
-  if (c.kind === "toilet")
-    return (
-      <>
-        {box(0, 0.24, d * 0.12, w * 0.8, 0.48, d * 0.65, "#f4f5ef")}
-        {box(0, 0.55, -d * 0.34, w, 0.6, d * 0.25, "#e9eee6")}
-        {box(0, 0.5, d * 0.1, w, 0.1, d * 0.75, "#fffdf4")}
-      </>
-    );
-  if (c.kind === "shower")
-    return (
-      <>
-        {box(0, 0.04, 0, w, 0.08, d, "#e5eae2")}
-        <Box
-          position={[w / 2, h / 2, 0]}
-          size={[0.025, h, d]}
-          color="#b8d6dd"
-          opacity={0.3}
-        />
-        <Box
-          position={[0, h / 2, -d / 2]}
-          size={[w, h, 0.025]}
-          color="#b8d6dd"
-          opacity={0.3}
-        />
-      </>
-    );
-  if (c.kind === "sink")
-    return (
-      <>
-        {box(0, h * 0.45, 0, w, h * 0.9, d, "#b59b79")}
-        {box(0, h, 0, w, 0.08, d, "#eeede4")}
-        {box(0, h + 0.045, 0, w * 0.65, 0.015, d * 0.65, "#b8ccc6")}
-        {box(0, h + 0.16, -d * 0.3, 0.04, 0.28, 0.04, "#87958f")}
-      </>
-    );
-  if (c.kind === "stove")
-    return (
-      <>
-        {box(0, h / 2, 0, w, h, d, "#aaa99e")}
-        {box(0, h + 0.015, 0, w, 0.035, d, "#30383a")}
-        {[-1, 1].flatMap((x) =>
-          [-1, 1].map((z) => (
-            <mesh
-              key={`${x}${z}`}
-              position={[x * w * 0.24, h + 0.04, z * d * 0.24]}
-              rotation={[-Math.PI / 2, 0, 0]}
-            >
-              <ringGeometry args={[w * 0.12, w * 0.15, 20]} />
-              <meshStandardMaterial color="#818a84" />
-            </mesh>
-          )),
-        )}
-      </>
-    );
-  if (c.kind === "shelf")
-    return (
-      <>
-        {[-1, 1].map((x) =>
-          box(x * w * 0.47, h / 2, 0, w * 0.06, h, d, "#947555", x),
-        )}
-        {Array.from({ length: 5 }, (_, i) =>
-          box(0, (h * i) / 4, 0, w, 0.045, d, "#a78a68", i),
-        )}
-      </>
-    );
-  return (
-    <>
-      {box(0, h / 2, 0, w, h, d)}
-      {box(0, h / 2, d * 0.505, 0.035, h * 0.8, 0.025, "#6f6555")}
-      {box(w * 0.15, h * 0.55, d * 0.53, 0.13, 0.025, 0.025, "#8d805e")}
-    </>
-  );
+
+function Object3D({item,mode}:{item:Item;mode:'translate'|'rotate'|'scale'}){
+ const s=useEditor(),studio=useStudio(),ref=useRef<THREE.Group>(null!),gizmo=useRef<any>(null);
+ useLayoutEffect(()=>{if(ref.current)studio.nodes.current.set(item.id,ref.current);return()=>{studio.nodes.current.delete(item.id);};},[item.id,item.hidden,studio]);
+ if(item.hidden)return null;
+ const model=<group ref={ref} name={`entity-${item.id}`} userData={{entityId:item.id}} position={[item.x,item.elevation,item.y]} rotation={[0,-item.rotation*Math.PI/180,0]}
+  onPointerDown={e=>{if(gizmo.current?.axis)return;itemPointer(item.id,e,studio);}} onPointerMove={e=>{if(s.tool!=='select'||studio.space.current)groundEvent('move',e);}} onPointerUp={e=>{if(s.tool!=='select'||studio.space.current)groundEvent('up',e);}} onClick={e=>e.stopPropagation()}>
+   <group scale={[item.flipX?-1:1,1,1]}><Suspense fallback={null}><ModelAsset item={item} quality={s.quality} onReady={studio.modelReady}/></Suspense></group>
+   {s.selected.includes(item.id)&&<group userData={{editorHelper:true}}><Box position={[0,-.012,0]} size={[item.width+.04,.012,item.depth+.04]} color="#8a78ee"/></group>}
+   {getCatalog(item.catalogId).kind==='lamp'&&<pointLight position={[0,item.height*.8,0]} color="#ffdeb0" intensity={s.scene.sun>=18?2:.25} distance={5} decay={2}/>}
+ </group>;
+ return s.cameraMode==='orbit'&&s.selected.length===1&&s.selected.includes(item.id)&&!item.locked&&!s.readOnly?<TransformControls ref={gizmo} object={ref} mode={mode} translationSnap={s.snap?.25:null} rotationSnap={s.snap?Math.PI/12:null} showX={mode!=='rotate'} showZ={mode!=='rotate'} showY={mode!=='translate'} onMouseDown={()=>studio.setInteracting(true)} onMouseUp={()=>{const n=ref.current!;s.updateItem(item.id,{x:n.position.x,y:n.position.z,elevation:Math.max(0,n.position.y),rotation:-n.rotation.y*180/Math.PI,width:Math.max(.1,Math.min(1000,item.width*n.scale.x)),depth:Math.max(.1,Math.min(1000,item.depth*n.scale.z)),height:Math.max(.1,Math.min(1000,item.height*n.scale.y))});n.scale.set(1,1,1);studio.setInteracting(false);}}>{model}</TransformControls>:model;
 }
-function Object3D({
-  item,
-  mode,
-}: {
-  item: Item;
-  mode: "translate" | "rotate";
-}) {
-  const s = useEditor();
-  const ref = useRef<THREE.Group>(null);
-  const [dragging, setDragging] = useState(false);
-  if (item.hidden) return null;
-  const selected = s.selected.includes(item.id);
-  const model = (
-    <group
-      ref={ref}
-      position={[item.x, item.elevation, item.y]}
-      rotation={[0, (-item.rotation * Math.PI) / 180, 0]}
-      onClick={(e) => {
-        e.stopPropagation();
-        s.select(item.id, e.nativeEvent.shiftKey);
-      }}
-    >
-      <group scale={[item.flipX ? -1 : 1, 1, 1]}>
-        <FurnitureModel item={item} />
-      </group>
-      {selected && (
-        <Box
-          position={[0, -0.015, 0]}
-          size={[item.width + 0.08, 0.02, item.depth + 0.08]}
-          color="#8a78ee"
-        />
-      )}
-    </group>
-  );
-  return selected && !item.locked && !s.readOnly ? (
-    <TransformControls
-      mode={mode}
-      showX={mode === "translate"}
-      showZ={mode === "translate"}
-      showY={mode === "rotate"}
-      onMouseUp={() => {
-        const o = ref.current!;
-        s.updateItem(item.id, {
-          x: o.position.x,
-          y: o.position.z,
-          elevation: o.position.y,
-          rotation: (-o.rotation.y * 180) / Math.PI,
-        });
-      }}
-    >
-      {model}
-    </TransformControls>
-  ) : (
-    model
-  );
-}
+
 function RoomMesh({ room }: { room: Room }) {
+  const studio=useStudio();
   const materialId = floorTexture(room.material) ?? "oak";
   const loaded = useTexture([
     `/assets/materials/${materialId}-albedo.webp`,
@@ -409,7 +131,7 @@ function RoomMesh({ room }: { room: Room }) {
     return s;
   }, [room.points]);
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow onPointerDown={e=>{e.stopPropagation();const st=useEditor.getState();if(studio.overview.current){st.set({message:'Switch to Current floor to edit'});return;}if(st.tool!=='select'||st.placing||studio.space.current||e.button===1){groundEvent('down',e);(e.target as HTMLElement|null)?.setPointerCapture(e.pointerId);}else st.select(room.id,e.nativeEvent.shiftKey);}} onPointerMove={e=>groundEvent('move',e)} onPointerUp={e=>groundEvent('up',e)}>
       <shapeGeometry args={[shape]} />
       <meshStandardMaterial
         color={room.color}
@@ -431,34 +153,31 @@ function WallMesh({
   openings: Opening[];
   cutaway: boolean;
 }) {
-  const source = useTexture(
-    `/assets/materials/${wall.finish === "paneling" ? "walnut" : wall.finish === "brick" ? "tile" : wall.finish === "wallpaper" ? "carpet" : "concrete"}-albedo.webp`,
-  );
-  const finishMap = useMemo(() => {
-    const t = source.clone();
-    t.wrapS = t.wrapT = THREE.RepeatWrapping;
-    t.repeat.set(3, 2);
-    t.colorSpace = THREE.SRGBColorSpace;
-    return t;
-  }, [source]);
-  useEffect(() => () => finishMap.dispose(), [finishMap]);
+  const studio=useStudio();
+  const materialId = wall.finish && wall.finish !== 'matte' ? wall.finish : 'plaster';
+  const sources = useTexture(['albedo','normal','roughness'].map(kind=>`/assets/materials/${materialId}-${kind}.webp`));
+  const maps=useMemo(()=>sources.map((source,i)=>{const map=source.clone();map.wrapS=map.wrapT=THREE.RepeatWrapping;map.repeat.set(3,2);map.colorSpace=i===0?THREE.SRGBColorSpace:THREE.NoColorSpace;map.needsUpdate=true;return map;}),[sources[0],sources[1],sources[2]]);
+  useEffect(()=>()=>maps.forEach(map=>map.dispose()),[maps]);
+  const camera=useThree(state=>state.camera),state=useEditor(),[front,setFront]=useState(false);
+  useFrame(()=>{const dx=wall.b.x-wall.a.x,dz=wall.b.y-wall.a.y,desired=(camera.position.x-(wall.a.x+wall.b.x)/2)*dz-(camera.position.z-(wall.a.y+wall.b.y)/2)*dx>0;if(desired!==front)setFront(desired);});
   const length = distance(wall.a, wall.b),
     angle = -Math.atan2(wall.b.y - wall.a.y, wall.b.x - wall.a.x),
-    height = cutaway ? Math.min(0.6, wall.height) : wall.height;
+    height = cutaway ? state.cameraMode==='top'?Math.min(1.2,wall.height):front?.12:wall.height : wall.height;
   const cuts = [
     0,
     length,
     ...openings.flatMap((o) => [o.offset, o.offset + o.width]),
   ].sort((a, b) => a - b);
   return (
-    <group position={[wall.a.x, 0, wall.a.y]} rotation={[0, angle, 0]}>
+    <group position={[wall.a.x, 0, wall.a.y]} rotation={[0, angle, 0]} onPointerDown={e=>{e.stopPropagation();const st=useEditor.getState();if(studio.overview.current){st.set({message:'Switch to Current floor to edit'});return;}if(st.tool!=='select'||st.placing||studio.space.current||e.button===1){groundEvent('down',e);(e.target as HTMLElement|null)?.setPointerCapture(e.pointerId);}else st.select(wall.id,e.nativeEvent.shiftKey);}} onPointerMove={e=>groundEvent('move',e)} onPointerUp={e=>groundEvent('up',e)}>
       {wallPanels(wall, openings, height).map((panel, i) => (
         <Box
           key={i}
           position={[panel.x, panel.y, 0]}
           size={[panel.width, panel.height, wall.thickness]}
           color={wall.color}
-          map={wall.finish && wall.finish !== "matte" ? finishMap : undefined}
+          map={wall.finish && wall.finish !== "matte" ? maps[0] : undefined}
+          normalMap={maps[1]} roughnessMap={maps[2]}
         />
       ))}
       {wallPanels(wall, openings, height)
@@ -501,16 +220,16 @@ function WallMesh({
               size={[o.width, 0.05, wall.thickness + 0.05]}
               color="#eeeae0"
             />
-            {!cutaway && (
+            {height > o.sill && (
               <>
                 <Box
-                  position={[o.offset, o.sill + o.height / 2, 0]}
-                  size={[0.045, o.height, wall.thickness]}
+                  position={[o.offset, o.sill + Math.min(o.height,height-o.sill) / 2, 0]}
+                  size={[0.045, Math.min(o.height,height-o.sill), wall.thickness]}
                   color="#eeeae0"
                 />
                 <Box
-                  position={[o.offset + o.width, o.sill + o.height / 2, 0]}
-                  size={[0.045, o.height, wall.thickness]}
+                  position={[o.offset + o.width, o.sill + Math.min(o.height,height-o.sill) / 2, 0]}
+                  size={[0.045, Math.min(o.height,height-o.sill), wall.thickness]}
                   color="#eeeae0"
                 />
               </>
@@ -564,7 +283,7 @@ function WallMesh({
                 size={[0.04, h, wall.thickness + 0.02]}
                 color="#ebe6d9"
               />
-              {!cutaway && (
+              {height>=o.height && (
                 <Box
                   position={[o.width / 2, o.height, 0]}
                   size={[o.width, 0.05, wall.thickness + 0.02]}
@@ -589,8 +308,12 @@ function ExportBridge() {
         a.href = gl.domElement.toDataURL("image/png");
         a.click();
       } else {
+        // Export only canonical floor geometry. Helpers, ground ray planes and gizmos
+        // are renderer infrastructure and must never inflate the exported building.
+        const exportScene=new THREE.Scene();
+        for(const child of scene.children)if(child.userData.exportRoot){const floor=child.clone(true);const helpers:THREE.Object3D[]=[];floor.traverse(object=>{if(object.userData.editorHelper||object.type==='TransformControls')helpers.push(object);});helpers.forEach(object=>object.removeFromParent());exportScene.add(floor);}
         new GLTFExporter().parse(
-          scene,
+          exportScene,
           (result) => {
             new GLTFLoader().parse(
               result as ArrayBuffer,
@@ -635,38 +358,9 @@ function ExportBridge() {
         );
       }
     }
-    function cameraEvent(e: Event) {
-      const detail = (e as CustomEvent).detail;
-      const c = controls as any;
-      if (detail === "save") {
-        const name = prompt("Name this camera view", "Camera view");
-        if (name)
-          useEditor.getState().commit((s) => {
-            s.cameras.push({
-              name,
-              position: camera.position.toArray(),
-              target: c?.target?.toArray() ?? [5.5, 0, 6],
-            });
-          });
-      } else if (detail === "top") {
-        camera.position.set(5.5, 24, 6.01);
-        c?.target?.set(5.5, 0, 6);
-        camera.lookAt(5.5, 0, 6);
-      } else if (detail === "reset") {
-        camera.position.set(18, 19, 22);
-        c?.target?.set(5.5, 0, 6);
-      } else if (typeof detail === "number" && detail >= 0) {
-        const saved = useEditor.getState().scene.cameras[detail];
-        camera.position.fromArray(saved.position);
-        c?.target?.fromArray(saved.target);
-      }
-      c?.update();
-    }
     window.addEventListener("buildspace-export-3d", export3d);
-    window.addEventListener("buildspace-camera", cameraEvent);
     return () => {
       window.removeEventListener("buildspace-export-3d", export3d);
-      window.removeEventListener("buildspace-camera", cameraEvent);
     };
   }, [scene, gl, camera, controls]);
   return null;
@@ -675,12 +369,15 @@ function Walk() {
   const { camera } = useThree();
   const keys = useRef(new Set<string>());
   useEffect(() => {
-    const d = (e: KeyboardEvent) => keys.current.add(e.code),
+    const d = (e: KeyboardEvent) => {if((e.target as HTMLElement).matches('input,textarea,select')||document.querySelector('[role="dialog"]'))return;keys.current.add(e.code);},
       u = (e: KeyboardEvent) => keys.current.delete(e.code);
+    const blur=()=>keys.current.clear();
+    window.addEventListener("blur",blur);
     window.addEventListener("keydown", d);
     window.addEventListener("keyup", u);
-    camera.position.set(7, 1.7, 5);
+
     return () => {
+      window.removeEventListener("blur",blur);
       window.removeEventListener("keydown", d);
       window.removeEventListener("keyup", u);
     };
@@ -704,13 +401,20 @@ function Walk() {
 }
 export default function Scene3D() {
   const s = useEditor();
+  const [loadedIds,setLoadedIds]=useState(new Set<string>());
+  const host=useRef<HTMLDivElement>(null),nodes=useRef(new Map<string,THREE.Group>()),interacting=useRef(false),overview=useRef(false),dragStart=useRef<((id:string,event:PointerEvent)=>void)|null>(null),space=useRef(false),[,setInteraction]=useState(false),[readyMode,setReadyMode]=useState<string|null>(null);
+  const studio=useMemo(()=>({overview,modelReady:(id:string)=>setLoadedIds(previous=>previous.has(id)?previous:new Set([...previous,id])),nodes,interacting,dragStart,space,setInteracting:(value:boolean)=>{interacting.current=value;setInteraction(value);},preview:(items:Item[])=>{for(const i of items){const n=nodes.current.get(i.id);if(n){n.position.set(i.x,i.elevation,i.y);n.rotation.y=-i.rotation*Math.PI/180;n.getObjectByName(`model-${i.id}`)?.scale.set(i.width,i.height,i.depth);}}}}),[]);
+  useEffect(()=>{const node=host.current;if(!node)return;const wheel=(e:WheelEvent)=>{const st=useEditor.getState();if(st.cameraMode!=='top')return;e.preventDefault();if(interacting.current||node.dataset.transforming==='true')return;const rect=node.getBoundingClientRect(),p={x:e.clientX-rect.left,y:e.clientY-rect.top},next=Math.max(12,Math.min(180,st.zoom*Math.exp(-e.deltaY*.0015)));st.set({zoom:next,pan:zoomAt(p,st.pan,st.zoom,next)});};node.addEventListener('wheel',wheel,{passive:false});return()=>node.removeEventListener('wheel',wheel);},[]);
   const [cutaway, setCutaway] = useState(true),
     [walk, setWalk] = useState(false),
     [allFloors, setAllFloors] = useState(false),
-    [mode, setMode] = useState<"translate" | "rotate">("translate");
+    [mode, setMode] = useState<"translate" | "rotate" | "scale">("translate");
   const f = activeFloor();
+  const batches=useMemo(()=>{const map=new Map<string,Item[]>();for(const i of f.items){if(i.hidden||i.flipX||s.selected.includes(i.id)||['lamp','shower'].includes(getCatalog(i.catalogId).kind))continue;const key=[i.catalogId,i.color,i.finish??'original',i.flipX?'mirror':'normal'].join('|');map.set(key,[...(map.get(key)??[]),i]);}return [...map.values()].filter(items=>items.length>=3);},[f.items,s.selected]);
+  const batchedIds=new Set(batches.flatMap(items=>items.map(i=>i.id)));
   return (
-    <div className="scene3d">
+    <StudioContext.Provider value={studio}><div ref={host} className="scene3d" data-testid="studio-3d" data-camera-mode={s.cameraMode} data-camera-ready={readyMode===s.cameraMode} data-models-ready={f.items.filter(i=>!i.hidden).every(i=>loadedIds.has(i.id))} data-zoom={s.zoom} data-pan-x={s.pan.x} data-pan-y={s.pan.y}>
+      <div className="studio-heading"><span>BUILDSPACE / STUDIO</span><strong>{s.cameraMode==='top'?'Top-down editing':s.cameraMode==='walk'?'Inside your space':'A new perspective'}</strong></div>
       <div className="view3d-options">
         <button
           onClick={() => setCutaway(!cutaway)}
@@ -718,26 +422,20 @@ export default function Scene3D() {
         >
           Cutaway walls
         </button>
-        <button onClick={() => setWalk(!walk)}>
-          {walk ? "Exit walkthrough" : "Walk through"}
-        </button>
-        <button onClick={() => setAllFloors(!allFloors)}>
+        <button aria-pressed={s.cameraMode==='walk'} onClick={()=>s.set({cameraMode:s.cameraMode==='walk'?'orbit':'walk'})}>Walk through</button>
+        <button aria-pressed={s.cameraMode==='orbit'} onClick={()=>s.set({cameraMode:'orbit'})}>Orbit view</button>
+        <button aria-pressed={s.cameraMode==='top'} onClick={()=>s.set({cameraMode:'top'})}>Top edit</button>
+        <button aria-pressed={s.scene.sun>=18} onClick={()=>s.commit(scene=>{scene.sun=scene.sun>=18?14:20;})}>{s.scene.sun>=18?'Evening':'Daylight'}</button>
+        <select aria-label="Render quality" value={s.quality} onChange={e=>s.set({quality:e.target.value as typeof s.quality})}><option value="draft">Draft</option><option value="balanced">Balanced</option><option value="high">High quality</option></select>
+        <button onClick={() => {overview.current=!allFloors;setAllFloors(!allFloors);s.select(null);}}>
           {allFloors ? "All floors" : "Current floor"}
         </button>
         <button
-          onClick={() => setMode(mode === "translate" ? "rotate" : "translate")}
+          onClick={() => setMode(mode === "translate" ? "rotate" : mode==="rotate"?"scale":"translate")}
         >
-          {mode === "translate" ? "Move gizmo" : "Rotate gizmo"}
+          {mode === "translate" ? "Move gizmo" : mode === "rotate"?"Rotate gizmo":"Resize gizmo"}
         </button>
-        <button
-          onClick={() =>
-            window.dispatchEvent(
-              new CustomEvent("buildspace-camera", { detail: "top" }),
-            )
-          }
-        >
-          Top view
-        </button>
+        <button onClick={()=>window.dispatchEvent(new CustomEvent("buildspace-camera",{detail:"focus"}))}>Focus selection</button>
         <button
           onClick={() =>
             window.dispatchEvent(
@@ -776,7 +474,7 @@ export default function Scene3D() {
           </select>
         )}
       </div>
-      {walk && (
+      {s.cameraMode==='walk' && (
         <div className="walk-hint">
           Click scene to look · WASD to move · Esc releases pointer
         </div>
@@ -785,10 +483,15 @@ export default function Scene3D() {
         shadows
         camera={{ position: [18, 19, 22], fov: 42, near: 0.05, far: 500 }}
         gl={{ antialias: true, preserveDrawingBuffer: true }}
-        onPointerMissed={() => s.select(null)}
+        onPointerMissed={() => {if(!interacting.current)s.select(null);}}
       >
-        <color attach="background" args={["#e8ecf0"]} />
-        <ambientLight intensity={s.scene.ambient} />
+        <color attach="background" args={[s.scene.sun>=18?'#252d3b':'#f3f1ed']} />
+        <StudioCamera onReady={setReadyMode}/>
+        <Suspense fallback={null}><Environment files="/assets/environments/studio.hdr" environmentIntensity={s.scene.sun>=18?.3:.8}/></Suspense>
+        <StudioEffects enabled={s.quality!=='draft'&&s.cameraMode==='orbit'}/>
+        <GroundInteraction/>
+        <StudioPointer/>
+        <ambientLight intensity={s.scene.ambient*(s.scene.sun>=18?.3:.65)} />
         <hemisphereLight args={["#f9f7ed", "#a8b2b7", 1]} />
         <directionalLight
           position={[
@@ -796,9 +499,9 @@ export default function Scene3D() {
             18,
             Math.sin((s.scene.sun / 24) * Math.PI * 2) * 14,
           ]}
-          intensity={2.5}
+          intensity={s.scene.sun>=18?.45:3.2}
           castShadow
-          shadow-mapSize={[2048, 2048]}
+          shadow-mapSize={s.quality==='high'?[2048,2048]:[1024,1024]}
           shadow-camera-left={-18}
           shadow-camera-right={18}
           shadow-camera-top={18}
@@ -807,7 +510,7 @@ export default function Scene3D() {
         />
         <Suspense fallback={null}>
           {(allFloors ? s.scene.floors : [f]).map((f) => (
-            <group key={f.id} position={[0, allFloors ? f.elevation : 0, 0]}>
+            <group key={f.id} name={`floor-${f.id}`} userData={{exportRoot:true}} position={[0, allFloors ? f.elevation : 0, 0]}>
               {f.rooms.map((r) => (
                 <RoomMesh key={r.id} room={r} />
               ))}
@@ -819,13 +522,14 @@ export default function Scene3D() {
                   cutaway={cutaway}
                 />
               ))}
-              {f.items.map((i) => (
+              {f.items.filter(i=>!batchedIds.has(i.id)||allFloors&&f.id!==s.floorId).map((i) => (
                 <Object3D key={i.id} item={i} mode={mode} />
               ))}
+              {f.id===s.floorId&&batches.map(items=><Suspense key={[items[0].catalogId,items[0].color,items[0].finish].join('|')} fallback={null}><InstancedAsset items={items}/></Suspense>)}
             </group>
           ))}
         </Suspense>
-        <Grid
+        {s.grid&&s.cameraMode==='top'&&<Grid
           position={[5, -0.03, 6]}
           args={[200, 200]}
           cellSize={0.5}
@@ -835,25 +539,12 @@ export default function Scene3D() {
           sectionColor="#a9b3bd"
           fadeDistance={50}
           infiniteGrid
-        />
-        {walk ? (
-          <Walk />
-        ) : (
-          <OrbitControls
-            makeDefault
-            target={[5.5, 0, 6]}
-            minDistance={2}
-            maxDistance={80}
-          />
-        )}
-        <GizmoHelper alignment="bottom-right" margin={[75, 75]}>
-          <GizmoViewport
-            axisColors={["#e1998b", "#8bb89e", "#8fa1d3"]}
-            labelColor="#fff"
-          />
-        </GizmoHelper>
+        />}
+        {s.cameraMode==='walk'&&<Walk/>}
         <ExportBridge />
       </Canvas>
-    </div>
+      {(!f.items.filter(i=>!i.hidden).every(i=>loadedIds.has(i.id))||readyMode!==s.cameraMode)&&<div className="studio-loading"><span>Preparing your space…</span></div>}
+      {!allFloors&&s.cameraMode==='top'&&readyMode==='top'&&<SelectionControls renderer={studio}/>}
+    </div></StudioContext.Provider>
   );
 }

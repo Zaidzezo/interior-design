@@ -37,7 +37,7 @@ import {
 } from "@core/geometry";
 import { totalCost } from "@core/estimate";
 import { editWall } from "@core/wall-edit";
-import { materials, getCatalog, furnitureFinishes } from "@core/catalog";
+import { materials, getCatalog, catalog, furnitureFinishes } from "@core/catalog";
 import { furnitureSvg, svgData } from "@core/vector";
 export function Numeric({
   label,
@@ -348,6 +348,7 @@ export default function Inspector({ onIssues }: { onIssues: () => void }) {
                     ))}
                   </select>
                 </label>
+                <label className="field-label">FURNITURE VARIANT<select aria-label="Furniture variant" value={item.catalogId} onChange={e=>{const c=getCatalog(e.target.value);s.updateItem(id,{catalogId:c.id,name:c.name,width:c.width,depth:c.depth,height:c.height,color:c.color,finish:c.defaultFinish??'original',price:c.price});}}>{catalog.filter(c=>c.kind===getCatalog(item.catalogId).kind).map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
                 <button
                   className="button"
                   aria-pressed={!!item.flipX}

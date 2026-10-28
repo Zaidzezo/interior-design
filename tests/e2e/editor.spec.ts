@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+test.beforeEach(async({page})=>{await page.addInitScript(()=>localStorage.setItem('buildspace-view','2D'));});
 import fs from "node:fs/promises";
 test("editor save/reload, exact inspector editing, history, versions, real 3D and exports", async ({
   page,

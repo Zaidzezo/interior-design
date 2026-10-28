@@ -102,39 +102,26 @@ function Workspace() {
     const state = useEditor.getState();
     if (state.readOnly || state.status === "saved" || !state.projectId)
       return true;
-    const { scene, projectId, revision, dirty } = state;
+    // Drain edits made during an acknowledged write before releasing the queue.
+    // A debounce callback can otherwise see the previous in-flight promise and
+    // leave the latest document permanently marked "unsaved".
     const pending = async () => {
-      state.set({ status: "saving" });
-      localStorage.setItem(
-        `buildspace-draft-${projectId}`,
-        JSON.stringify({ scene, revision }),
-      );
       try {
-        const result = await api<{ revision: number }>(
-          `projects/${projectId}/scene`,
-          { method: "PUT", body: JSON.stringify({ scene, revision }) },
-        );
-        const now = useEditor.getState();
-        if (now.projectId === projectId) {
-          const unchanged = now.dirty === dirty;
-          now.set({
-            revision: result.revision,
-            status: unchanged ? "saved" : "unsaved",
-          });
-          if (unchanged)
-            localStorage.removeItem(`buildspace-draft-${projectId}`);
+        for (;;) {
+          const snapshot=useEditor.getState();
+          if(snapshot.readOnly||!snapshot.projectId||snapshot.status==='saved')return true;
+          const {scene,projectId,revision,dirty}=snapshot;
+          snapshot.set({status:'saving'});
+          localStorage.setItem(`buildspace-draft-${projectId}`,JSON.stringify({scene,revision}));
+          let result:{revision:number};
+          try{result=await api<{revision:number}>(`projects/${projectId}/scene`,{method:'PUT',body:JSON.stringify({scene,revision})});}
+          catch(error){if(useEditor.getState().projectId===projectId)useEditor.getState().set({status:error instanceof ApiError&&error.status===409?'conflict':'error',message:error instanceof Error?error.message:'Save failed. Your local draft is retained.'});return false;}
+          const now=useEditor.getState();
+          if(now.projectId!==projectId)continue;
+          const unchanged=now.dirty===dirty;
+          now.set({revision:result.revision,status:unchanged?'saved':'unsaved'});
+          if(unchanged){localStorage.removeItem(`buildspace-draft-${projectId}`);return true;}
         }
-        return true;
-      } catch (e) {
-        useEditor.getState().set({
-          status:
-            e instanceof ApiError && e.status === 409 ? "conflict" : "error",
-          message:
-            e instanceof Error
-              ? e.message
-              : "Save failed. Your local draft is retained.",
-        });
-        return false;
       } finally {
         inflight.current = null;
       }
@@ -168,8 +155,8 @@ function Workspace() {
         project = await api("projects", {
           method: "POST",
           body: JSON.stringify({
-            name: "The Alder Apartment",
-            template: "sample",
+            name: useEditor.getState().view==="3D"?"The Sage Salon":"The Alder Apartment",
+            template: useEditor.getState().view==="3D"?"salon":"sample",
           }),
         });
       s.load(project.scene, project.id, project.revision, project.readOnly);
@@ -208,6 +195,7 @@ function Workspace() {
   useEffect(() => {
     if (!initialized.current) {
       initialized.current = true;
+      const preferred=localStorage.getItem("buildspace-view");s.set({view:preferred==="2D"?"2D":"3D"});
       boot();
     }
   }, [boot]);
@@ -242,6 +230,8 @@ function Workspace() {
       if (target.matches("input,select,textarea") || target.isContentEditable)
         return;
       const st = useEditor.getState();
+      if(st.view==='3D'&&st.cameraMode==='walk'){if(e.key==='Escape')st.set({cameraMode:'orbit'});return;}
+      if(e.key==='Escape'){st.set({placing:null,selected:[],tool:'select'});return;}
       if (e.metaKey || e.ctrlKey) {
         const k = e.key.toLowerCase();
         if (["z", "y", "s", "d", "c", "v", "x"].includes(k)) {
@@ -309,7 +299,7 @@ function Workspace() {
         m: "measure",
         t: "note",
       };
-      if (tools[e.key]) st.set({ tool: tools[e.key], placing: null });
+      if (tools[e.key]) st.set({ tool: tools[e.key], placing: null,...(st.view==='3D'&&!['select','pan'].includes(tools[e.key])?{cameraMode:'top' as const}:{}) });
       if (e.key === "?") setDialog("help");
     }
     window.addEventListener("keydown", key);
@@ -587,7 +577,7 @@ function Workspace() {
             </div>
           </div>
           <div className="canvas-body">
-            {s.view === "2D" ? <PlanCanvas /> : <Scene3D />}
+            {!s.projectId?<div className="canvas-loading">Opening your studio…</div>:s.view === "2D" ? <PlanCanvas /> : <Scene3D key={s.projectId}/>}
             {!presentation && (
               <div className="floating-tools">
                 {tools.map(([id, label, Icon, key], i) => (
@@ -595,9 +585,9 @@ function Workspace() {
                     key={id}
                     title={`${label} (${key})`}
                     aria-label={label}
-                    className={s.tool === id && s.view === "2D" ? "active" : ""}
+                    className={s.tool === id ? "active" : ""}
                     onClick={() => {
-                      s.set({ tool: id, placing: null, view: "2D" });
+                      s.set({tool:id,placing:null,...(s.view==="3D"&&id!=="select"&&id!=="pan"?{cameraMode:"top" as const}:{})});
                     }}
                   >
                     <Icon size={17} />
@@ -693,17 +683,16 @@ function Workspace() {
             <div className="zoom-controls">
               <button
                 title="Zoom in"
-                onClick={() => s.set({ zoom: Math.min(180, s.zoom * 1.2) })}
+                onClick={() => s.view==="3D"&&s.cameraMode==="orbit"?window.dispatchEvent(new CustomEvent("buildspace-camera",{detail:"zoom-in"})):s.set({ zoom: Math.min(180, s.zoom * 1.2) })}
               >
                 <Plus size={18} />
               </button>
               <span>
-                {Math.round((s.zoom / 50) * 100)}
-                <small>%</small>
+                {s.view==="3D"&&s.cameraMode!=="top"?"3D":<>{Math.round((s.zoom / 50) * 100)}<small>%</small></>}
               </span>
               <button
                 title="Zoom out"
-                onClick={() => s.set({ zoom: Math.max(12, s.zoom / 1.2) })}
+                onClick={() => s.view==="3D"&&s.cameraMode==="orbit"?window.dispatchEvent(new CustomEvent("buildspace-camera",{detail:"zoom-out"})):s.set({ zoom: Math.max(12, s.zoom / 1.2) })}
               >
                 <Minus size={18} />
               </button>

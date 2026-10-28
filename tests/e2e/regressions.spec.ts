@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+test.beforeEach(async({page})=>{await page.addInitScript(()=>localStorage.setItem('buildspace-view','2D'));});
 
 test("profile guard, precise canvas selection, rotated resize and reload", async ({
   page,
@@ -166,4 +167,13 @@ test('default walls select, move and resize through canvas gestures',async({page
  await expect(page.getByText('All changes saved',{exact:true})).toBeVisible();
  saved=await (await request.get(`/api/projects/${project.id}`)).json();
  expect(saved.scene.floors[0].walls.find((w:any)=>w.id===wall.id).a.y).toBeLessThan(moved.a.y);
+});
+
+test('edits made while a save is in flight are drained after acknowledgement',async({page})=>{
+ await page.goto('/');await expect(page.getByText('All changes saved',{exact:true})).toBeVisible();await page.locator('.room-row').first().click();
+ const name=page.getByLabel('Entity name');let release!:()=>void,entered!:()=>void;const held=new Promise<void>(resolve=>release=resolve),started=new Promise<void>(resolve=>entered=resolve);let writes=0;
+ await page.route('**/api/projects/*/scene',async route=>{if(route.request().method()!=='PUT')return route.continue();const response=await route.fetch();writes++;if(writes===1){entered();await held;}await route.fulfill({response});});
+ await name.fill('Save queue first edit');await name.press('Tab');await page.getByTitle('Save (Ctrl+S)').click();await started;
+ await name.fill('Save queue latest edit');await name.press('Tab');await page.getByTitle('Save (Ctrl+S)').click();release();
+ await expect(page.getByText('All changes saved',{exact:true})).toBeVisible();expect(writes).toBeGreaterThanOrEqual(2);const id=await page.evaluate(()=>localStorage.getItem('buildspace-project'));const project=await(await page.request.get(`/api/projects/${id}`)).json();expect(project.scene.floors[0].rooms[0].name).toBe('Save queue latest edit');
 });

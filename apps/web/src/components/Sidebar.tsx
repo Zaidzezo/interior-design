@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { useEditor, activeFloor } from "@/lib/store";
 import { useSession, accountInitials } from "@/lib/session";
-import { catalog, materials, Kind, floorTexture } from "@core/catalog";
+import { catalog, materials, Kind, floorTexture, getCatalog, furnitureFinishes, wallMaterials } from "@core/catalog";
 import { furnitureSvg, svgData, woodSvg } from "@core/vector";
 import { area } from "@core/geometry";
 const roomTypes: [string, Kind][] = [
@@ -70,6 +70,7 @@ export default function Sidebar({
       }
     });
   const [showAll, setShowAll] = useState(false);
+  const placing=s.placing?getCatalog(s.placing):null;
   const filtered = catalog.filter(
     (c) =>
       (category === "All" ||
@@ -246,7 +247,8 @@ export default function Sidebar({
                       >
                         <img
                           loading="lazy"
-                          src={svgData(furnitureSvg(c.id, c.color))}
+                          src={`/assets/thumbnails/${c.id}.webp`}
+                      onError={e=>{e.currentTarget.onerror=null;e.currentTarget.src=svgData(furnitureSvg(c.id,c.color));}}
                           alt={c.name}
                         />
                       </button>
@@ -255,6 +257,12 @@ export default function Sidebar({
                 </div>
               </section>
             )}
+            {placing&&<section className="placement-options" aria-label="Furniture options">
+              <strong>{placing.name}</strong>
+              <label>Variant<select aria-label="Placement variant" value={placing.id} onChange={e=>s.set({placing:e.target.value})}>{catalog.filter(c=>c.kind===placing.kind).map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
+              <label>Material<select aria-label="Placement material" value={s.placingFinish??placing.defaultFinish??'original'} onChange={e=>{const finish=furnitureFinishes.find(f=>f.id===e.target.value)!;s.set({placingFinish:finish.id,placingColor:finish.color??placing.color});}}>{furnitureFinishes.map(f=><option key={f.id} value={f.id}>{f.name}</option>)}</select></label>
+              <div className="finish-swatches">{[placing.color,'#e8dfcc','#879c8a','#7b6355','#35465a'].map((color,index)=><button key={index} aria-label={`Placement color ${index+1}`} aria-pressed={(s.placingColor??placing.color)===color} style={{background:color}} onClick={()=>s.set({placingColor:color})}/>)}<input type="color" aria-label="Placement color" value={s.placingColor??placing.color} onChange={e=>s.set({placingColor:e.target.value})}/></div>
+            </section>}
             <div className="catalog-grid">
               {filtered.map((c) => (
                 <div
@@ -297,7 +305,8 @@ export default function Sidebar({
                   >
                     <img
                       loading="lazy"
-                      src={svgData(furnitureSvg(c.id, c.color))}
+                      src={`/assets/thumbnails/${c.id}.webp`}
+                      onError={e=>{e.currentTarget.onerror=null;e.currentTarget.src=svgData(furnitureSvg(c.id,c.color));}}
                       alt={c.name}
                     />
                     <strong>{c.name}</strong>
@@ -330,6 +339,9 @@ export default function Sidebar({
             <p className="sidebar-hint">
               Select a room or object, then apply a finish.
             </p>
+            <div className="section-heading">WALL FINISHES</div>
+            <div className="material-grid">{wallMaterials.filter(m=>m.name.toLowerCase().includes(search.toLowerCase())).map(m=><button key={m.id} onClick={()=>{const state=useEditor.getState(),id=state.selected[0];if(!activeFloor().walls.some(w=>w.id===id)){state.set({message:'Select a wall to apply a wall finish'});return;}state.commit(scene=>{const wall=scene.floors.flatMap(f=>f.walls).find(w=>w.id===id)!;wall.finish=m.id;wall.color=m.color;});}}><span style={{background:m.id==='matte'?m.color:`url(/assets/materials/${m.id}-albedo.webp) center/cover`}}/><strong>{m.name}</strong><small>Wall finish</small></button>)}</div>
+            <div className="section-heading">FLOOR FINISHES</div>
             <div className="material-grid">
               {materials
                 .filter((m) =>

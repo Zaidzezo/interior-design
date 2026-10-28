@@ -36,6 +36,9 @@ type State = {
   readOnly: boolean;
   tool: Tool;
   view: "2D" | "3D";
+  cameraMode: "top" | "orbit" | "walk";
+  quality: "draft" | "balanced" | "high";
+  lightMode: "day" | "evening";
   planStyle: "realistic" | "blueprint";
   recentItems: string[];
   grid: boolean;
@@ -49,6 +52,8 @@ type State = {
   tab: string;
   placing: string | null;
   placingRotation: number;
+  placingColor: string|null;
+  placingFinish: Item["finish"]|null;
   message: string;
   status: "loading" | "saved" | "saving" | "unsaved" | "error" | "conflict";
   load: (
@@ -83,7 +88,10 @@ export const useEditor = create<State>((set, get) => {
     revision: 0,
     readOnly: false,
     tool: "select",
-    view: "2D",
+    view: "3D",
+    cameraMode:"orbit",
+    quality:"balanced",
+    lightMode:"day",
     planStyle: "realistic",
     recentItems: [],
     grid: true,
@@ -97,12 +105,15 @@ export const useEditor = create<State>((set, get) => {
     tab: "rooms",
     placing: null,
     placingRotation: 0,
+    placingColor:null,
+    placingFinish:null,
     message: "",
     status: "loading",
     set: (patch) => {
+      if(patch.view&&typeof window!=="undefined")localStorage.setItem("buildspace-view",patch.view);
       if (patch.planStyle && typeof window !== "undefined")
         localStorage.setItem("buildspace-plan-style", patch.planStyle);
-      set(patch);
+      set({...((patch.placing!==undefined&&patch.placing!==get().placing)?{placingColor:null,placingFinish:null}:{}),...patch});
     },
     load: (scene, id, revision, readOnly = false) => {
       const parsed = SceneSchema.parse(scene);
@@ -257,7 +268,8 @@ export const useEditor = create<State>((set, get) => {
           height: c.height,
           elevation: 0,
           rotation: get().placingRotation,
-          color: c.color,
+          color: get().placingColor??c.color,
+          ...((get().placingFinish??c.defaultFinish)?{finish:(get().placingFinish??c.defaultFinish)!}:{}),
           price: c.price,
           locked: false,
           hidden: false,
