@@ -15,7 +15,13 @@ export type Kind =
   | "lamp"
   | "shelf"
   | "fridge"
-  | "stairs";
+  | "stairs"
+  | "curtain"
+  | "art"
+  | "mirror"
+  | "divider"
+  | "ottoman"
+  | "fireplace";
 export type CatalogItem = {
   id: string;
   name: string;
@@ -28,6 +34,7 @@ export type CatalogItem = {
   color: string;
   footprint?: "rectangle" | "ellipse" | "sectional";
   variant?: number;
+  defaultFinish?: "original"|"boucle"|"velvet"|"walnut"|"marble"|"brass"|"rattan";
 };
 const groups: [
   Kind,
@@ -381,6 +388,14 @@ const sizes: Record<string, [number, number, number]> = {
   "Tall wardrobe": [1.8, 0.6, 2.1],
   "Double vanity": [1.4, 0.55, 0.85],
 };
+Object.assign(sizes,{
+ 'Queen upholstered':[1.8,2.15,1.15],'King oak':[1.95,2.2,1.1],'Double linen':[1.4,2.05,1.05],'Single walnut':[.95,2.05,.95],'Guest trundle':[1.0,2.05,.85],'Low platform':[1.8,2.15,.55],
+ 'Wingback':[.82,.88,1.05],'Kitchen base':[1.2,.6,.9],'Bathroom vanity':[1.2,.5,.85],'Media console':[1.8,.45,.5],'Utility cupboard':[.6,.5,1.8],
+ 'Under counter fridge':[.6,.6,.85],'French door fridge':[.9,.75,1.8],'Range cooker':[.9,.65,.9],'Compact bath':[.75,1.45,.6],'Wall hung toilet':[.38,.55,.45],
+ 'Table mushroom':[.35,.35,.45],'Ceiling spot':[.12,.12,.16],'Pendant globe':[.4,.4,.75],'Small fern':[.45,.45,.4],'Snake plant':[.35,.35,.8],'Olive tree':[.7,.65,1.7],
+ 'Low library':[1.6,.35,.8],'Wall bookshelf':[1.2,.25,.8],'Narrow console table':[1.1,.3,.8],'Round jute':[2,2,.02],
+ 'Standing desk':[1.4,.7,1.1],'Dual monitor workspace':[1.8,.8,1.15],'Corner workspace':[1.6,1.2,1.1],'Wall mounted workstation':[1.4,.6,1.1],'Drafting table':[1.2,.8,.95],'Children study desk':[.9,.55,.6],
+});
 for (const c of catalog) {
   const size = sizes[c.name];
   if (size) [c.width, c.depth, c.height] = size;
@@ -439,6 +454,7 @@ for (const [id, name, kind, width, depth, height, category] of [
 export const getCatalog = (id: string) =>
   catalog.find((c) => c.id === id) ?? catalog[0];
 export const materials = [
+  {id:"porcelain",name:"Large-format porcelain",color:"#e2e4df",rate:55,family:"Stone"},
   {
     id: "oak",
     name: "Natural oak",
@@ -546,6 +562,7 @@ export function floorTexture(id: string) {
     "concrete",
     "terrazzo",
     "herringbone",
+    "porcelain",
   ].includes(id)
     ? id
     : null;
@@ -566,3 +583,26 @@ materials.push(
     family: "Paint",
   },
 );
+
+// Original studio collection; dimensions are meters, IDs remain stable across renderers.
+for(const item of [
+ {id:'studio-curtain-linen',name:'Full-height linen curtains',category:'Decor',kind:'curtain',width:3.6,depth:.18,height:2.65,color:'#ddd5c4',price:420,variant:0},
+ {id:'studio-curtain-velvet',name:'Pleated velvet drapes',category:'Decor',kind:'curtain',width:2.4,depth:.22,height:2.5,color:'#8b9786',price:380,variant:1},
+ {id:'studio-art-abstract',name:'Walnut framed abstract',category:'Decor',kind:'art',width:.72,depth:.045,height:.95,color:'#d2b48b',price:120,variant:0},
+ {id:'studio-art-landscape',name:'Gallery landscape print',category:'Decor',kind:'art',width:1.1,depth:.04,height:.65,color:'#889884',price:135,variant:1},
+ {id:'studio-mirror-brass',name:'Round brass wall mirror',category:'Decor',kind:'mirror',width:.8,depth:.045,height:.8,color:'#c7a35f',price:190,variant:0},
+ {id:'studio-divider-oak',name:'Oak slatted room divider',category:'Storage',kind:'divider',width:1.4,depth:.12,height:2.1,color:'#ab865d',price:310,variant:0},
+ {id:'studio-ottoman-boucle',name:'Round bouclé ottoman',category:'Living',kind:'ottoman',width:.7,depth:.7,height:.43,color:'#dfd5c0',price:170,variant:0,footprint:'ellipse',defaultFinish:'boucle'},
+ {id:'studio-ottoman-velvet',name:'Tufted velvet footstool',category:'Living',kind:'ottoman',width:.85,depth:.55,height:.4,color:'#7c8c7b',price:185,variant:1,defaultFinish:'velvet'},
+ {id:'studio-table-marble',name:'Calacatta oval coffee table',category:'Living',kind:'table',width:1.25,depth:.75,height:.38,color:'#edeae2',price:430,variant:8,footprint:'ellipse',defaultFinish:'marble'},
+ {id:'studio-sofa-curve',name:'Curved bouclé sofa',category:'Living',kind:'sofa',width:2.5,depth:1.15,height:.82,color:'#d8cfbc',price:1450,variant:7,defaultFinish:'boucle'},
+ {id:'studio-fireplace-stone',name:'Limestone mantel fireplace',category:'Decor',kind:'fireplace',width:1.35,depth:.4,height:1.05,color:'#ded8c8',price:760,variant:0}
+] as CatalogItem[])catalog.push(item);
+
+export const wallMaterials = [
+ {id:'matte',name:'Matte wall paint',color:'#f0eee7'},
+ {id:'plaster',name:'Mineral plaster',color:'#f1eee7'},
+ {id:'brick',name:'Warm brick',color:'#ffffff'},
+ {id:'paneling',name:'Oak wall paneling',color:'#ffffff'},
+ {id:'wallpaper',name:'Woven wallpaper',color:'#ffffff'},
+] as const;

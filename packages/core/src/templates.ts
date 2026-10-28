@@ -1,8 +1,11 @@
 import { Scene, Floor, Item, uid } from "./model";
 import { blankScene, rectangleRoom, sampleScene } from "./sample";
 import { wallsFromRooms, bounds, distance, pointInPolygon } from "./geometry";
+import {showcaseScene} from "./showcases";
 import { catalog, Kind } from "./catalog";
 export const templates = [
+ {id:"salon",name:"The Sage Salon",description:"A light-filled lounge · warm oak, bouclé and brass"},
+ {id:"suite",name:"The Walnut Suite",description:"A quiet retreat · tailored upholstery and walnut"},
   {
     id: "sample",
     name: "The Alder Apartment",
@@ -45,6 +48,7 @@ export const templates = [
   },
 ];
 export function templateScene(key: string): Scene {
+ if(key==="salon"||key==="suite")return showcaseScene(key);
   if (key === "sample") return sampleScene();
   if (key === "family") {
     const s = sampleScene();

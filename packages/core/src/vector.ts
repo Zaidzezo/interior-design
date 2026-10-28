@@ -424,6 +424,13 @@ export function furnitureSvg(
         rect(45, 5, 10, 28, "#a6b1ac", 2) +
         circle(50, 55, 5, "#a6b1ac");
   }
+  if(kind==='curtain')body=rect(0,5,100,8,'#ab9065',1)+Array.from({length:12+(v%2)*6},(_,i)=>`<path d="M${i*100/(12+(v%2)*6)} 15q8 30 0 75" fill="none" stroke="${color}" stroke-width="5"/>`).join('');
+  if(kind==='art')body=rect(1,1,98,98,'#8d745b',1)+rect(7,7,86,86,'#eee8da',1)+Array.from({length:3+v},(_,i)=>circle(22+i*18,30+i*12,10+i*2,color)).join('');
+  if(kind==='mirror')body=rect(0,35,100,30,color,12)+line(8,49,92,49)+circle(8,50,3,'#eee9dc')+circle(92,50,3,'#eee9dc');
+  if(kind==='divider')body=rect(0,0,100,100,'#998063',1)+Array.from({length:15},(_,i)=>rect(i*6.7+1,5,3,90,color,0)).join('');
+  if(kind==='ottoman')body=(entry?.footprint==='ellipse'?circle(50,50,48,color):rect(1,1,98,98,color,15))+[25,75].flatMap(x=>[25,75].map(y=>circle(x,y,2,'#746956'))).join('');
+  if(kind==='fireplace')body=rect(0,0,100,100,color,1)+rect(18,18,64,65,'#3f4444',1)+[30,50,70].map(x=>rect(x,40,8,35,'#8d6745',3)).join('');
+  if(kind==='sofa'&&name.includes('curved'))body=`<path d="M3 80Q0 0 50 2Q100 0 97 80L80 80Q80 30 50 27Q20 30 20 80Z" fill="${color}" stroke="#625b50" stroke-width="2"/>`+[20,40,60,80].map(x=>rect(x-8,46,16,34,'#e6e0d3',6)).join('');
   if (entry?.footprint === "sectional")
     body = `<defs><clipPath id="section"><path d="M0 0H100V100H65V55H0Z"/></clipPath></defs><g clip-path="url(#section)">${body}</g>`;
   if (!realistic)

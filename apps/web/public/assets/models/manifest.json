@@ -1,0 +1,1400 @@
+{
+  "author": "BuildSpace contributors",
+  "source": "scripts/build-models.ts and apps/web/src/lib/assets/model-factory.ts",
+  "license": "CC0-1.0",
+  "compression": "EXT_meshopt_compression",
+  "models": {
+    "sofa-0-0": {
+      "name": "Linen three seat",
+      "bytes": 123064,
+      "sourceVertices": 17037,
+      "geometryHash": "5b4ab06146347497ef87a5f7464ddf47915470483853edf6fa55193af439d125",
+      "dimensions": [
+        2.2,
+        0.82,
+        0.95
+      ],
+      "license": "CC0-1.0"
+    },
+    "sofa-0-1": {
+      "name": "Bouclé loveseat",
+      "bytes": 109628,
+      "sourceVertices": 15154,
+      "geometryHash": "24fecf5be9c5570026a6afc61f39a097a56fa2ddeca1858000a60cbbd3757668",
+      "dimensions": [
+        1.5,
+        0.78,
+        0.85
+      ],
+      "license": "CC0-1.0"
+    },
+    "sofa-0-2": {
+      "name": "Deep modular",
+      "bytes": 152120,
+      "sourceVertices": 20803,
+      "geometryHash": "8c010545fdf26e0c6a23baf94cb116a68c5dc5c9851ab91617dad48209073720",
+      "dimensions": [
+        2.76,
+        0.8,
+        0.95
+      ],
+      "license": "CC0-1.0"
+    },
+    "sofa-0-3": {
+      "name": "Compact two seat",
+      "bytes": 93600,
+      "sourceVertices": 13271,
+      "geometryHash": "fdfa89da87da00d039833b67efbd2a5eec614e856a78711cb42f6b0d8188ffe5",
+      "dimensions": [
+        1.65,
+        0.8,
+        0.85
+      ],
+      "license": "CC0-1.0"
+    },
+    "sofa-0-4": {
+      "name": "Corner sectional",
+      "bytes": 152940,
+      "sourceVertices": 21703,
+      "geometryHash": "a5806930ba8c51e373e9bc391fc275d72e7c80e1fad0457a6101a294be9c578e",
+      "dimensions": [
+        2.9,
+        0.85,
+        2.1
+      ],
+      "license": "CC0-1.0"
+    },
+    "sofa-0-5": {
+      "name": "Leather lounge",
+      "bytes": 152412,
+      "sourceVertices": 20803,
+      "geometryHash": "2634b6260cff29ee2dd499ffc0b47cc3f791597a13c5a883e04019bb5f329f0e",
+      "dimensions": [
+        2.4,
+        0.8,
+        0.95
+      ],
+      "license": "CC0-1.0"
+    },
+    "chair-1-0": {
+      "name": "Oak lounge",
+      "bytes": 49776,
+      "sourceVertices": 9422,
+      "geometryHash": "6ff5ecca24b3f46b485f1e58adfb91a9eb14b1c23abac98dbeb022b7f31611fe",
+      "dimensions": [
+        0.8,
+        0.8,
+        0.85
+      ],
+      "license": "CC0-1.0"
+    },
+    "chair-1-1": {
+      "name": "Upholstered accent",
+      "bytes": 75148,
+      "sourceVertices": 10398,
+      "geometryHash": "0621ba6524a73d13b2257e90b2a4612e6f90117e5af5f445d5ad9812bdff3f3d",
+      "dimensions": [
+        0.8,
+        0.8,
+        0.85
+      ],
+      "license": "CC0-1.0"
+    },
+    "chair-1-2": {
+      "name": "Reading chair",
+      "bytes": 44852,
+      "sourceVertices": 6060,
+      "geometryHash": "bcdca3e997182c3912cec924c6d1772888902841b5387f2d5572e08e1845fbd6",
+      "dimensions": [
+        0.92,
+        0.8,
+        0.85
+      ],
+      "license": "CC0-1.0"
+    },
+    "chair-1-3": {
+      "name": "Wingback",
+      "bytes": 45716,
+      "sourceVertices": 7622,
+      "geometryHash": "77d776fb63c766db96cf948139ad1554464685c3dc570661d536d91bc6341ed3",
+      "dimensions": [
+        0.82,
+        1.05,
+        0.88
+      ],
+      "license": "CC0-1.0"
+    },
+    "chair-1-4": {
+      "name": "Club chair",
+      "bytes": 61220,
+      "sourceVertices": 8515,
+      "geometryHash": "5b98b0a482fb3a6112d954e49c3c575f645543630b0d0eae82e46d33963c441b",
+      "dimensions": [
+        0.8,
+        0.8,
+        0.85
+      ],
+      "license": "CC0-1.0"
+    },
+    "bed-2-0": {
+      "name": "Queen upholstered",
+      "bytes": 88760,
+      "sourceVertices": 16788,
+      "geometryHash": "67731bbcb457ca9e32a67ab2cb2abb06719f1d5960586edd09e455bb2e0a4d58",
+      "dimensions": [
+        1.8,
+        1.15,
+        2.15
+      ],
+      "license": "CC0-1.0"
+    },
+    "bed-2-1": {
+      "name": "King oak",
+      "bytes": 98612,
+      "sourceVertices": 20388,
+      "geometryHash": "3748e08314a3114f9a7c31ae3175969a0888107992f6d0930dc395bbd61c1711",
+      "dimensions": [
+        1.95,
+        1.1,
+        2.2
+      ],
+      "license": "CC0-1.0"
+    },
+    "bed-2-2": {
+      "name": "Double linen",
+      "bytes": 79496,
+      "sourceVertices": 13188,
+      "geometryHash": "907b6a11711f53ee4eed2d7d53157b1c630567a79ec926688d4d8bc78d7f698e",
+      "dimensions": [
+        1.4,
+        1.05,
+        2.05
+      ],
+      "license": "CC0-1.0"
+    },
+    "bed-2-3": {
+      "name": "Single walnut",
+      "bytes": 57916,
+      "sourceVertices": 8605,
+      "geometryHash": "669e19f43e202986def58da2d56e03d25388b3d0fccae809db77fbbc368606b2",
+      "dimensions": [
+        0.95,
+        0.95,
+        2.05
+      ],
+      "license": "CC0-1.0"
+    },
+    "bed-2-4": {
+      "name": "Guest trundle",
+      "bytes": 66736,
+      "sourceVertices": 11305,
+      "geometryHash": "8e4902dc9682f5a7c56555e0f06a5bd1fe9a9860a14787e468b8e183be18f6b0",
+      "dimensions": [
+        1,
+        0.85,
+        2.05
+      ],
+      "license": "CC0-1.0"
+    },
+    "bed-2-5": {
+      "name": "Low platform",
+      "bytes": 75940,
+      "sourceVertices": 11388,
+      "geometryHash": "9f9f4f6586049088c8d7518de2527b11c6523695e2a7aacaede45ac26556bf8f",
+      "dimensions": [
+        1.8,
+        0.55,
+        2.15
+      ],
+      "license": "CC0-1.0"
+    },
+    "cabinet-3-0": {
+      "name": "Oak sideboard",
+      "bytes": 67972,
+      "sourceVertices": 22756,
+      "geometryHash": "3ca538c392ec11ab17e6cacdc3443b3c82e59ac8f387a6e829cbf58911682ad3",
+      "dimensions": [
+        1.2,
+        0.8,
+        0.45
+      ],
+      "license": "CC0-1.0"
+    },
+    "cabinet-3-1": {
+      "name": "Walnut dresser",
+      "bytes": 41100,
+      "sourceVertices": 12856,
+      "geometryHash": "9cbfb19f3a5a2d7b1db947b7081aee6773ba97ffabe1d85a03bdfc3d27468c68",
+      "dimensions": [
+        1.2,
+        0.8,
+        0.45
+      ],
+      "license": "CC0-1.0"
+    },
+    "cabinet-3-2": {
+      "name": "Entry console",
+      "bytes": 21708,
+      "sourceVertices": 6556,
+      "geometryHash": "df4210c05dd5aaced1b7c74edf8317d7d29c27c273541bc17e91f00fcce3d83b",
+      "dimensions": [
+        1.38,
+        0.8,
+        0.45
+      ],
+      "license": "CC0-1.0"
+    },
+    "cabinet-3-3": {
+      "name": "Tall wardrobe",
+      "bytes": 28168,
+      "sourceVertices": 8356,
+      "geometryHash": "503fb68fb5bbfb0648acb9c822a76fdc7ff2fff52c22ae1d021aa2e55e41e133",
+      "dimensions": [
+        1.8,
+        2.1,
+        0.6
+      ],
+      "license": "CC0-1.0"
+    },
+    "cabinet-3-4": {
+      "name": "Kitchen base",
+      "bytes": 38784,
+      "sourceVertices": 11056,
+      "geometryHash": "ee45a090396f47ee429cc152bbdf93922cb1d8adbb503f9e05a54452f3550bf9",
+      "dimensions": [
+        1.2,
+        0.9,
+        0.6
+      ],
+      "license": "CC0-1.0"
+    },
+    "cabinet-3-5": {
+      "name": "Bathroom vanity",
+      "bytes": 38180,
+      "sourceVertices": 9738,
+      "geometryHash": "c73b9638e93a242eb87cd8b6237aa275dea63c1d9974b871917ffb5df01f6ed8",
+      "dimensions": [
+        1.2,
+        0.85,
+        0.5
+      ],
+      "license": "CC0-1.0"
+    },
+    "cabinet-3-6": {
+      "name": "Media console",
+      "bytes": 26872,
+      "sourceVertices": 8356,
+      "geometryHash": "83f2bb85aba73dcd2401d2f2449f0e58f360863151c9200c2132885e0dc4ba2b",
+      "dimensions": [
+        1.8,
+        0.5,
+        0.45
+      ],
+      "license": "CC0-1.0"
+    },
+    "cabinet-3-7": {
+      "name": "Utility cupboard",
+      "bytes": 24716,
+      "sourceVertices": 8356,
+      "geometryHash": "c022b60509137fb516541d0aa4068f79e1bcbe216f7c3338a0ccc889972dfa41",
+      "dimensions": [
+        0.6,
+        1.8,
+        0.5
+      ],
+      "license": "CC0-1.0"
+    },
+    "table-4-0": {
+      "name": "Six person dining",
+      "bytes": 16024,
+      "sourceVertices": 3204,
+      "geometryHash": "a5fbc1a83480d2a31943ab9dd080a6f39169858f791f11a2cceb7e86ce750c09",
+      "dimensions": [
+        1.8,
+        0.75,
+        0.9
+      ],
+      "license": "CC0-1.0"
+    },
+    "table-4-1": {
+      "name": "Four person round",
+      "bytes": 10344,
+      "sourceVertices": 884,
+      "geometryHash": "17013de1183939f043f93da16ec56aa6af7532945cf2face41a8a9055b97dd11",
+      "dimensions": [
+        1.1,
+        0.75,
+        1.1
+      ],
+      "license": "CC0-1.0"
+    },
+    "table-4-2": {
+      "name": "Extendable oak",
+      "bytes": 19760,
+      "sourceVertices": 4104,
+      "geometryHash": "93d1e5c1f34c4f7586260001e268c4aec8378d455c83ca2479b52d63fceceaff",
+      "dimensions": [
+        2.07,
+        0.75,
+        0.9
+      ],
+      "license": "CC0-1.0"
+    },
+    "table-4-3": {
+      "name": "Bistro table",
+      "bytes": 10344,
+      "sourceVertices": 884,
+      "geometryHash": "4201ab9967df60ef4bbd81ae4167a8427090eed72a2e8468b3a76cf6132a056d",
+      "dimensions": [
+        0.7,
+        0.74,
+        0.7
+      ],
+      "license": "CC0-1.0"
+    },
+    "table-4-4": {
+      "name": "Coffee table",
+      "bytes": 11032,
+      "sourceVertices": 1404,
+      "geometryHash": "d8fbfb67660f4563b2753c9975ff62a48ac9e0a78a8bc1a51957197c4245b06b",
+      "dimensions": [
+        1.1,
+        0.42,
+        0.6
+      ],
+      "license": "CC0-1.0"
+    },
+    "table-4-5": {
+      "name": "Side table",
+      "bytes": 11076,
+      "sourceVertices": 1404,
+      "geometryHash": "64a661b49edf2390538cc2f63de419c5bef180c81874c8c824c2cd3563e43599",
+      "dimensions": [
+        0.45,
+        0.5,
+        0.45
+      ],
+      "license": "CC0-1.0"
+    },
+    "desk-5-0": {
+      "name": "Writing desk",
+      "bytes": 12696,
+      "sourceVertices": 2156,
+      "geometryHash": "2dee1c8f8f28d1761045350e67cff666f659ad304ac79f0a94ada0a6d03d00a0",
+      "dimensions": [
+        1.5,
+        0.75,
+        0.7
+      ],
+      "license": "CC0-1.0"
+    },
+    "desk-5-1": {
+      "name": "Standing desk",
+      "bytes": 23912,
+      "sourceVertices": 6400,
+      "geometryHash": "8d1e941b62941b3137b552930b260c552b97582ff08cbfc6e479f6e2fff99298",
+      "dimensions": [
+        1.4,
+        1.1,
+        0.7
+      ],
+      "license": "CC0-1.0"
+    },
+    "desk-5-2": {
+      "name": "Corner workspace",
+      "bytes": 21940,
+      "sourceVertices": 4884,
+      "geometryHash": "84c7ce7e712fb5fbf83b640985a257ed72622d8d62d4e9d59c6eba68066e9a93",
+      "dimensions": [
+        1.6,
+        1.1,
+        1.2
+      ],
+      "license": "CC0-1.0"
+    },
+    "desk-5-3": {
+      "name": "Compact study",
+      "bytes": 10616,
+      "sourceVertices": 2156,
+      "geometryHash": "b6f7f5856c1591850307d6f7f7c673975433267e4fef9aee77325a8fcf26685f",
+      "dimensions": [
+        0.98,
+        0.75,
+        0.7
+      ],
+      "license": "CC0-1.0"
+    },
+    "desk-5-4": {
+      "name": "Executive desk",
+      "bytes": 32940,
+      "sourceVertices": 9356,
+      "geometryHash": "9987a113933705a9efb89c3223f2c5388c9c5f8c948df512436ba70612ba6228",
+      "dimensions": [
+        1.5,
+        0.75,
+        0.7
+      ],
+      "license": "CC0-1.0"
+    },
+    "chair-6-0": {
+      "name": "Oak dining",
+      "bytes": 30980,
+      "sourceVertices": 5858,
+      "geometryHash": "15d1fc68ff7125a5772f1ac7375226c8cd5513d5c492a0cf95a2fbc2ccbae19d",
+      "dimensions": [
+        0.48,
+        0.85,
+        0.5
+      ],
+      "license": "CC0-1.0"
+    },
+    "chair-6-1": {
+      "name": "Wishbone dining",
+      "bytes": 33476,
+      "sourceVertices": 6758,
+      "geometryHash": "34ece816f703d985cd0c229a97ead6f97bff91186bb0da694b8e76850ebe003c",
+      "dimensions": [
+        0.48,
+        0.85,
+        0.5
+      ],
+      "license": "CC0-1.0"
+    },
+    "chair-6-2": {
+      "name": "Upholstered dining",
+      "bytes": 35940,
+      "sourceVertices": 7658,
+      "geometryHash": "fd408ef09626666c4dfa5fb89183517d9a197266a1803d98f794ac20fc21fb87",
+      "dimensions": [
+        0.55,
+        0.85,
+        0.5
+      ],
+      "license": "CC0-1.0"
+    },
+    "chair-6-3": {
+      "name": "Kitchen stool",
+      "bytes": 23940,
+      "sourceVertices": 2266,
+      "geometryHash": "75a6ae153599d119a5faea26eb8b89ddc398fdc05cca1c95cacd208efe43eefb",
+      "dimensions": [
+        0.38,
+        0.65,
+        0.38
+      ],
+      "license": "CC0-1.0"
+    },
+    "chair-6-4": {
+      "name": "Counter stool",
+      "bytes": 23740,
+      "sourceVertices": 2266,
+      "geometryHash": "2603e331bf2200cb1364e6ecd75a172f31a414539b3d6a295720d6d897842294",
+      "dimensions": [
+        0.42,
+        0.75,
+        0.42
+      ],
+      "license": "CC0-1.0"
+    },
+    "sink-7-0": {
+      "name": "Single basin",
+      "bytes": 33248,
+      "sourceVertices": 9219,
+      "geometryHash": "3968fc3039efd5eaa81850d3ccc01d7d09916c90206e3f83c05c36ed330bdc06",
+      "dimensions": [
+        0.8,
+        0.9,
+        0.6
+      ],
+      "license": "CC0-1.0"
+    },
+    "sink-7-1": {
+      "name": "Double basin",
+      "bytes": 47616,
+      "sourceVertices": 13938,
+      "geometryHash": "fad7a924b79cb92d27b54dfd1ce72055bc656ad0944cfcf829420e84950e735a",
+      "dimensions": [
+        0.8,
+        0.9,
+        0.6
+      ],
+      "license": "CC0-1.0"
+    },
+    "sink-7-2": {
+      "name": "Farmhouse basin",
+      "bytes": 35804,
+      "sourceVertices": 10119,
+      "geometryHash": "97996ad888fa0dc146b7d7f6a5d6329f3cc2e9f0d736f96edf8e39c200cbdb80",
+      "dimensions": [
+        0.92,
+        0.9,
+        0.6
+      ],
+      "license": "CC0-1.0"
+    },
+    "sink-7-3": {
+      "name": "Compact stainless",
+      "bytes": 31928,
+      "sourceVertices": 9219,
+      "geometryHash": "2d7c22169b4c0276dddee725aee50889b61b26abc2e8eb442241784035f7e734",
+      "dimensions": [
+        0.52,
+        0.9,
+        0.6
+      ],
+      "license": "CC0-1.0"
+    },
+    "stove-8-0": {
+      "name": "Four ring induction",
+      "bytes": 21768,
+      "sourceVertices": 4188,
+      "geometryHash": "59a24e1852242960be474fcb8a82d346679a556ac20469a64f8b2e67b00bf0a4",
+      "dimensions": [
+        0.6,
+        0.9,
+        0.6
+      ],
+      "license": "CC0-1.0"
+    },
+    "stove-8-1": {
+      "name": "Gas hob",
+      "bytes": 41376,
+      "sourceVertices": 11388,
+      "geometryHash": "5d9cd30b690e30631dc0ff32b5c6234beefba0dca487eecbc1bd17dc21746bcd",
+      "dimensions": [
+        0.6,
+        0.9,
+        0.6
+      ],
+      "license": "CC0-1.0"
+    },
+    "stove-8-2": {
+      "name": "Electric oven",
+      "bytes": 21772,
+      "sourceVertices": 4188,
+      "geometryHash": "570feb6b4a583e3b21113e25acd5c61e23474ea1bfb133464734335e5bdc1aee",
+      "dimensions": [
+        0.69,
+        0.9,
+        0.6
+      ],
+      "license": "CC0-1.0"
+    },
+    "stove-8-3": {
+      "name": "Range cooker",
+      "bytes": 25252,
+      "sourceVertices": 4482,
+      "geometryHash": "405ccce5dfb4954a9c32f31dbdaf0ea72a67e37dcbf1d93ab8394858cedf7dbe",
+      "dimensions": [
+        0.9,
+        0.9,
+        0.65
+      ],
+      "license": "CC0-1.0"
+    },
+    "fridge-9-0": {
+      "name": "Tall refrigerator",
+      "bytes": 26300,
+      "sourceVertices": 9000,
+      "geometryHash": "d8225de7ca3a2a13bc56b4ea26bbcb9abfb49d141f44e44db5f57ac365fa3b73",
+      "dimensions": [
+        0.75,
+        1.9,
+        0.7
+      ],
+      "license": "CC0-1.0"
+    },
+    "fridge-9-1": {
+      "name": "French door fridge",
+      "bytes": 31692,
+      "sourceVertices": 10800,
+      "geometryHash": "b64586c016da953ec175414329122d02f51e25b824b3e953baf854f2d540e9be",
+      "dimensions": [
+        0.9,
+        1.8,
+        0.75
+      ],
+      "license": "CC0-1.0"
+    },
+    "fridge-9-2": {
+      "name": "Under counter fridge",
+      "bytes": 35208,
+      "sourceVertices": 12600,
+      "geometryHash": "44121be2b2f7fdcc115744e9ba0907a4e53a6a68796a21c7e247b9c12ea48293",
+      "dimensions": [
+        0.6,
+        0.85,
+        0.6
+      ],
+      "license": "CC0-1.0"
+    },
+    "bath-10-0": {
+      "name": "Freestanding bath",
+      "bytes": 30340,
+      "sourceVertices": 4475,
+      "geometryHash": "e48c5f5d69d193b91ac77631669e598e52b33245d6628f3439c4152826383141",
+      "dimensions": [
+        0.85,
+        0.6,
+        1.75
+      ],
+      "license": "CC0-1.0"
+    },
+    "bath-10-1": {
+      "name": "Inset bathtub",
+      "bytes": 41108,
+      "sourceVertices": 8075,
+      "geometryHash": "0dae3a449018fb91af0760833f2bedc2d655717c18c5809a133ce89f910e3370",
+      "dimensions": [
+        0.85,
+        0.6,
+        1.75
+      ],
+      "license": "CC0-1.0"
+    },
+    "bath-10-2": {
+      "name": "Compact bath",
+      "bytes": 30288,
+      "sourceVertices": 4475,
+      "geometryHash": "3beec834be671f0bb58a66092abe5c8c2b5a20d9a31f3abaa96f42250984471d",
+      "dimensions": [
+        0.75,
+        0.6,
+        1.45
+      ],
+      "license": "CC0-1.0"
+    },
+    "shower-11-0": {
+      "name": "Walk in shower",
+      "bytes": 14220,
+      "sourceVertices": 3015,
+      "geometryHash": "a3cd3e07e3991b1577cc62a03601bb99d62c0b145e4a569aa05e46fce5821b30",
+      "dimensions": [
+        1,
+        2.1,
+        1
+      ],
+      "license": "CC0-1.0"
+    },
+    "shower-11-1": {
+      "name": "Corner shower",
+      "bytes": 21384,
+      "sourceVertices": 5715,
+      "geometryHash": "8a26a3a508bf7c843529c71c17c45e41c8cc66dc99c9b7933f46e35f1288f337",
+      "dimensions": [
+        1,
+        2.1,
+        1
+      ],
+      "license": "CC0-1.0"
+    },
+    "shower-11-2": {
+      "name": "Wet room tray",
+      "bytes": 16620,
+      "sourceVertices": 3915,
+      "geometryHash": "2b821d04e8e5487a38735f835297981efef3119cb883877c8ef141e23846ca09",
+      "dimensions": [
+        1.15,
+        2.1,
+        1
+      ],
+      "license": "CC0-1.0"
+    },
+    "toilet-12-0": {
+      "name": "Wall hung toilet",
+      "bytes": 23652,
+      "sourceVertices": 2995,
+      "geometryHash": "9eb29fe639f259d6d316dded1e5135465d9d57ec3ecd1efcd7d1d02fcfc89169",
+      "dimensions": [
+        0.38,
+        0.45,
+        0.55
+      ],
+      "license": "CC0-1.0"
+    },
+    "toilet-12-1": {
+      "name": "Close coupled toilet",
+      "bytes": 26792,
+      "sourceVertices": 3971,
+      "geometryHash": "6242146888495598c5914833f519e180a20fbcf3d701031bc5c50e5e83bb29dd",
+      "dimensions": [
+        0.45,
+        0.75,
+        0.7
+      ],
+      "license": "CC0-1.0"
+    },
+    "toilet-12-2": {
+      "name": "Compact toilet",
+      "bytes": 22348,
+      "sourceVertices": 2995,
+      "geometryHash": "89a7edd83fe460d1244b619e2d39bb42449724c348f98f5b4aa43e5af17b54ce",
+      "dimensions": [
+        0.52,
+        0.75,
+        0.7
+      ],
+      "license": "CC0-1.0"
+    },
+    "sink-13-0": {
+      "name": "Floating vanity",
+      "bytes": 33416,
+      "sourceVertices": 9219,
+      "geometryHash": "ed5bb47652a36213adcd29b50f7bd0626ab81beb33e65b482bd9082a102603c3",
+      "dimensions": [
+        0.8,
+        0.85,
+        0.5
+      ],
+      "license": "CC0-1.0"
+    },
+    "sink-13-1": {
+      "name": "Double vanity",
+      "bytes": 47776,
+      "sourceVertices": 13938,
+      "geometryHash": "7527ece105c5ee4a7ce13c10f997ed8e4211fa09a1871649abd11cec2796b984",
+      "dimensions": [
+        1.4,
+        0.85,
+        0.55
+      ],
+      "license": "CC0-1.0"
+    },
+    "sink-13-2": {
+      "name": "Pedestal basin",
+      "bytes": 19268,
+      "sourceVertices": 4915,
+      "geometryHash": "e0352a091d5d123feaf2c330effc66d843d83d52f1f6f539cc3a688ac1bcb5ab",
+      "dimensions": [
+        0.92,
+        0.85,
+        0.5
+      ],
+      "license": "CC0-1.0"
+    },
+    "plant-14-0": {
+      "name": "Fiddle leaf fig",
+      "bytes": 56260,
+      "sourceVertices": 3403,
+      "geometryHash": "1a942513e24b3a397c35a48b475a234031f131f2c22bf3a9927d5dc731dd91cd",
+      "dimensions": [
+        0.5,
+        1.2,
+        0.5
+      ],
+      "license": "CC0-1.0"
+    },
+    "plant-14-1": {
+      "name": "Monstera",
+      "bytes": 139524,
+      "sourceVertices": 6777,
+      "geometryHash": "0b6412f623810ce9acb99de7d01bc10d23b8b21551430e3117d706ca3ac06638",
+      "dimensions": [
+        0.5,
+        1.2,
+        0.5
+      ],
+      "license": "CC0-1.0"
+    },
+    "plant-14-2": {
+      "name": "Olive tree",
+      "bytes": 157220,
+      "sourceVertices": 9703,
+      "geometryHash": "9ac718dc5b16beb5271eb197b6b12d0dfa68f081686c65bbd3f859f80f4e3e8e",
+      "dimensions": [
+        0.7,
+        1.7,
+        0.65
+      ],
+      "license": "CC0-1.0"
+    },
+    "plant-14-3": {
+      "name": "Bird of paradise",
+      "bytes": 32364,
+      "sourceVertices": 1933,
+      "geometryHash": "65c41f7f8d895ad1a61f7f44d12a980d92a75c498092decdceffbeb107f0bc42",
+      "dimensions": [
+        0.33,
+        1.2,
+        0.5
+      ],
+      "license": "CC0-1.0"
+    },
+    "plant-14-4": {
+      "name": "Snake plant",
+      "bytes": 26876,
+      "sourceVertices": 1254,
+      "geometryHash": "62872109fef475e55eb016471239d3ae9ec835191f3c91d47a09af03dbe04fbd",
+      "dimensions": [
+        0.35,
+        0.8,
+        0.35
+      ],
+      "license": "CC0-1.0"
+    },
+    "plant-14-5": {
+      "name": "Small fern",
+      "bytes": 67108,
+      "sourceVertices": 13448,
+      "geometryHash": "ff032cdb7c4b92921c9c665954976d142171c9d705a3ae4bb9f1af407ed56d08",
+      "dimensions": [
+        0.45,
+        0.4,
+        0.45
+      ],
+      "license": "CC0-1.0"
+    },
+    "rug-15-0": {
+      "name": "Wool ivory",
+      "bytes": 108544,
+      "sourceVertices": 47700,
+      "geometryHash": "59976936797d3c6360f57dc5f48ef6c70c6a23021f59946aee953204e114d008",
+      "dimensions": [
+        2.5,
+        0.02,
+        1.8
+      ],
+      "license": "CC0-1.0"
+    },
+    "rug-15-1": {
+      "name": "Woven sand",
+      "bytes": 120500,
+      "sourceVertices": 53100,
+      "geometryHash": "21a86eaaf86c9f62131f6edb4c24050b2434ad4051ade64e58e81a1663770fc1",
+      "dimensions": [
+        2.5,
+        0.02,
+        1.8
+      ],
+      "license": "CC0-1.0"
+    },
+    "rug-15-2": {
+      "name": "Persian clay",
+      "bytes": 177012,
+      "sourceVertices": 77400,
+      "geometryHash": "c6f7aa42beac3bf44c2e95014cad86c05734e9fcc000d3b446265aacf5e0520b",
+      "dimensions": [
+        2.88,
+        0.02,
+        1.8
+      ],
+      "license": "CC0-1.0"
+    },
+    "rug-15-3": {
+      "name": "Sisal natural",
+      "bytes": 146332,
+      "sourceVertices": 63900,
+      "geometryHash": "dc9c086729de41d00fb37132bf8557893a0982b62f7abdff2d64355981292188",
+      "dimensions": [
+        1.63,
+        0.02,
+        1.8
+      ],
+      "license": "CC0-1.0"
+    },
+    "rug-15-4": {
+      "name": "Geometric sage",
+      "bytes": 119064,
+      "sourceVertices": 52200,
+      "geometryHash": "d75f3c68b6ab707e9e93177f1378b63d82db68f9377edbe6cc181facc6f4a4f9",
+      "dimensions": [
+        2.5,
+        0.02,
+        1.8
+      ],
+      "license": "CC0-1.0"
+    },
+    "rug-15-5": {
+      "name": "Round jute",
+      "bytes": 44616,
+      "sourceVertices": 4288,
+      "geometryHash": "874ff5c7a9449557f43bd96a049d39a44247f05e01cc2c37ad5f5eb61592e794",
+      "dimensions": [
+        2,
+        0.02,
+        2
+      ],
+      "license": "CC0-1.0"
+    },
+    "lamp-16-0": {
+      "name": "Floor arc",
+      "bytes": 6876,
+      "sourceVertices": 397,
+      "geometryHash": "d1682c397fb340eb39248bb6eb25fcb6d9922533aabddb1e437c7a5096afee59",
+      "dimensions": [
+        0.4,
+        1.6,
+        0.4
+      ],
+      "license": "CC0-1.0"
+    },
+    "lamp-16-1": {
+      "name": "Table mushroom",
+      "bytes": 7376,
+      "sourceVertices": 441,
+      "geometryHash": "4a32c2a12e08376a4d5675a31314b8d13e21907555d7f43d5695c6ab15aa7224",
+      "dimensions": [
+        0.35,
+        0.45,
+        0.35
+      ],
+      "license": "CC0-1.0"
+    },
+    "lamp-16-2": {
+      "name": "Tripod floor",
+      "bytes": 10732,
+      "sourceVertices": 635,
+      "geometryHash": "646703b2af696e46a728b64e9c4217c7b0d85595333c70a43513da2acfcb4428",
+      "dimensions": [
+        0.46,
+        1.6,
+        0.4
+      ],
+      "license": "CC0-1.0"
+    },
+    "lamp-16-3": {
+      "name": "Pendant globe",
+      "bytes": 7776,
+      "sourceVertices": 384,
+      "geometryHash": "0381fa0a683a21fa0d0be0baba166e0ecad90acf9e0ee3e3c2e1058365bf2500",
+      "dimensions": [
+        0.4,
+        0.75,
+        0.4
+      ],
+      "license": "CC0-1.0"
+    },
+    "lamp-16-4": {
+      "name": "Ceiling spot",
+      "bytes": 4304,
+      "sourceVertices": 392,
+      "geometryHash": "ae65c8a6978ece5edd93b1772e5d8fdae83755e72975f629affd2f827e6f9b63",
+      "dimensions": [
+        0.12,
+        0.16,
+        0.12
+      ],
+      "license": "CC0-1.0"
+    },
+    "shelf-17-0": {
+      "name": "Open bookcase",
+      "bytes": 59868,
+      "sourceVertices": 19800,
+      "geometryHash": "073fe6988c837e7a05d8c72f50a9f88f3066e245776b83871a4c04785b4d3b8d",
+      "dimensions": [
+        1.2,
+        1.8,
+        0.35
+      ],
+      "license": "CC0-1.0"
+    },
+    "shelf-17-1": {
+      "name": "Wall bookshelf",
+      "bytes": 74916,
+      "sourceVertices": 25200,
+      "geometryHash": "d3e8c5f2a0c9e3c4598860540793e32f57e118f4e072c42d0a7f715df4a79fe1",
+      "dimensions": [
+        1.2,
+        0.8,
+        0.25
+      ],
+      "license": "CC0-1.0"
+    },
+    "shelf-17-2": {
+      "name": "Low library",
+      "bytes": 89524,
+      "sourceVertices": 30600,
+      "geometryHash": "ed15fdc12c79f962e2ce7aaa66e9e20a7951be455d15b1a24a3cd07b3ae50e63",
+      "dimensions": [
+        1.6,
+        0.8,
+        0.35
+      ],
+      "license": "CC0-1.0"
+    },
+    "shelf-17-3": {
+      "name": "Display shelves",
+      "bytes": 59676,
+      "sourceVertices": 19800,
+      "geometryHash": "071d50241ab16f5b45bdc53e655121d297ac0a892387d03eac7dcc36cc11ca59",
+      "dimensions": [
+        0.78,
+        1.8,
+        0.35
+      ],
+      "license": "CC0-1.0"
+    },
+    "stairs-18-0": {
+      "name": "Straight oak staircase",
+      "bytes": 34956,
+      "sourceVertices": 11038,
+      "geometryHash": "e787b42078d5c25c3511445e3049a3a31cec65791c9e1a9e669f894d25a746f0",
+      "dimensions": [
+        1,
+        2.8,
+        3
+      ],
+      "license": "CC0-1.0"
+    },
+    "stairs-18-1": {
+      "name": "Compact utility stairs",
+      "bytes": 41388,
+      "sourceVertices": 12838,
+      "geometryHash": "10b2f95eebf66d74b1a2bf1eecfa6d4e3f8b2ad0b9a995ac05e69eff95542982",
+      "dimensions": [
+        1,
+        2.8,
+        3
+      ],
+      "license": "CC0-1.0"
+    },
+    "stairs-18-2": {
+      "name": "Wide open stair",
+      "bytes": 35088,
+      "sourceVertices": 11038,
+      "geometryHash": "e74b286e6ea0a0d660b3981b0e18adbc269b9b51b6fb4c4981d5998d76357c3a",
+      "dimensions": [
+        1.15,
+        2.8,
+        3
+      ],
+      "license": "CC0-1.0"
+    },
+    "cabinet-19-0": {
+      "name": "Oak kitchen island",
+      "bytes": 37108,
+      "sourceVertices": 11056,
+      "geometryHash": "23a45db448dd4c4307bf5f1a169781c3c32ac1842a1c9b2095fdb085a599d1d9",
+      "dimensions": [
+        1.8,
+        0.9,
+        0.9
+      ],
+      "license": "CC0-1.0"
+    },
+    "cabinet-19-1": {
+      "name": "Stone prep island",
+      "bytes": 42084,
+      "sourceVertices": 12856,
+      "geometryHash": "cbcf5fca00a0ef51a0f90e7c37757aa1bc716d604d19851a836e436cad922b21",
+      "dimensions": [
+        1.8,
+        0.9,
+        0.9
+      ],
+      "license": "CC0-1.0"
+    },
+    "cabinet-19-2": {
+      "name": "Breakfast peninsula",
+      "bytes": 44540,
+      "sourceVertices": 13756,
+      "geometryHash": "a48f8af25fe539374856dc1aeafb09da99a8696ba42dba396e931fe7e99b34f3",
+      "dimensions": [
+        2.07,
+        0.9,
+        0.9
+      ],
+      "license": "CC0-1.0"
+    },
+    "cabinet-19-3": {
+      "name": "Rolling butcher block",
+      "bytes": 23044,
+      "sourceVertices": 4324,
+      "geometryHash": "b7cda04c71ff06fa9296dcf5d296955723740f3130910a327975d3acae973034",
+      "dimensions": [
+        1.17,
+        0.9,
+        0.9
+      ],
+      "license": "CC0-1.0"
+    },
+    "desk-20-0": {
+      "name": "Dual monitor workspace",
+      "bytes": 25968,
+      "sourceVertices": 6556,
+      "geometryHash": "ffa645e3ab4e4e90340cbd2ccde20616bfec0a57de54bf0b8a53e2444267ecdc",
+      "dimensions": [
+        1.8,
+        1.15,
+        0.8
+      ],
+      "license": "CC0-1.0"
+    },
+    "desk-20-1": {
+      "name": "Wall mounted workstation",
+      "bytes": 21684,
+      "sourceVertices": 5638,
+      "geometryHash": "c78896a3592e82eae74e9e557f97c966073079dfe8af0d4a9fa03aa46308d54a",
+      "dimensions": [
+        1.4,
+        1.1,
+        0.6
+      ],
+      "license": "CC0-1.0"
+    },
+    "desk-20-2": {
+      "name": "Drafting table",
+      "bytes": 19204,
+      "sourceVertices": 4756,
+      "geometryHash": "93751e2e6020464088bb141e1aa64e02e0a1b21006cf5a0543435368013eed52",
+      "dimensions": [
+        1.2,
+        0.95,
+        0.8
+      ],
+      "license": "CC0-1.0"
+    },
+    "desk-20-3": {
+      "name": "Children study desk",
+      "bytes": 28192,
+      "sourceVertices": 7556,
+      "geometryHash": "a059dfb710369490e3e739fd8d68757567bc73aeb7f53c6c98eaf434a7244067",
+      "dimensions": [
+        0.9,
+        0.6,
+        0.55
+      ],
+      "license": "CC0-1.0"
+    },
+    "table-21-0": {
+      "name": "Low square walnut",
+      "bytes": 13528,
+      "sourceVertices": 2304,
+      "geometryHash": "a951633cfef4bea47e7d2a7fc6d9e977b35492f7c5a71c3b1ac840f1f1b610c6",
+      "dimensions": [
+        0.7,
+        0.45,
+        0.7
+      ],
+      "license": "CC0-1.0"
+    },
+    "table-21-1": {
+      "name": "Nested coffee tables",
+      "bytes": 12628,
+      "sourceVertices": 1688,
+      "geometryHash": "1102be322e6021e487d98eee360f16080641f5704fcdd3f03493b5f5def2970c",
+      "dimensions": [
+        0.7,
+        0.45,
+        0.7
+      ],
+      "license": "CC0-1.0"
+    },
+    "table-21-2": {
+      "name": "Narrow console table",
+      "bytes": 14444,
+      "sourceVertices": 3856,
+      "geometryHash": "d0e672fccfe9cf6a92036b555e4b4a7a6ce904e9ac3e6ac4ba5eb87e27c06b04",
+      "dimensions": [
+        1.1,
+        0.8,
+        0.3
+      ],
+      "license": "CC0-1.0"
+    },
+    "table-21-3": {
+      "name": "Round accent table",
+      "bytes": 10548,
+      "sourceVertices": 884,
+      "geometryHash": "635dcef72208ce7f6f1e7293506ce287c7a9d7cb81700b6a3548683b3d3d235f",
+      "dimensions": [
+        0.45,
+        0.45,
+        0.7
+      ],
+      "license": "CC0-1.0"
+    },
+    "office-task-chair": {
+      "name": "Office task chair",
+      "bytes": 58616,
+      "sourceVertices": 10751,
+      "geometryHash": "18457e67e01f3fc2acf2b18ad4c3baf63b77488cf41401e2fafd2b46580695fc",
+      "dimensions": [
+        0.65,
+        1.05,
+        0.65
+      ],
+      "license": "CC0-1.0"
+    },
+    "classroom-chair": {
+      "name": "Classroom stacking chair",
+      "bytes": 33576,
+      "sourceVertices": 6758,
+      "geometryHash": "427d316b3815111192b25784725bbae1247f624549800786f7ed1f0eed7e7c41",
+      "dimensions": [
+        0.45,
+        0.8,
+        0.5
+      ],
+      "license": "CC0-1.0"
+    },
+    "classroom-desk": {
+      "name": "Classroom student desk",
+      "bytes": 28160,
+      "sourceVertices": 7556,
+      "geometryHash": "452bde5b8f6bda5eea66f3fc0c80a3a149c6536d13d09f3554e5047148ca0548",
+      "dimensions": [
+        0.65,
+        0.74,
+        0.5
+      ],
+      "license": "CC0-1.0"
+    },
+    "meeting-table": {
+      "name": "Eight person meeting table",
+      "bytes": 10892,
+      "sourceVertices": 1404,
+      "geometryHash": "369e0f76eb0537b0d37da050968fc476965dcbaee66da01340732b828af3a111",
+      "dimensions": [
+        2.4,
+        0.75,
+        1.1
+      ],
+      "license": "CC0-1.0"
+    },
+    "entry-bench": {
+      "name": "Slatted entry bench",
+      "bytes": 21164,
+      "sourceVertices": 6556,
+      "geometryHash": "2ee137a9ad1d3187c9f345fdc918948f2ef0fac39ec5628b0598115fb7a39aaa",
+      "dimensions": [
+        1.2,
+        0.45,
+        0.4
+      ],
+      "license": "CC0-1.0"
+    },
+    "studio-curtain-linen": {
+      "name": "Full-height linen curtains",
+      "bytes": 52000,
+      "sourceVertices": 4374,
+      "geometryHash": "888ea223cd549525213f7733715b2ca3ba8bc9154b5adb2f5cef31f45a51357c",
+      "dimensions": [
+        3.6,
+        2.65,
+        0.18
+      ],
+      "license": "CC0-1.0"
+    },
+    "studio-curtain-velvet": {
+      "name": "Pleated velvet drapes",
+      "bytes": 57356,
+      "sourceVertices": 4738,
+      "geometryHash": "dd56119039f874dddaa54a8dfd8a6080dd0a285466c3f8864e34080d339043d9",
+      "dimensions": [
+        2.4,
+        2.5,
+        0.22
+      ],
+      "license": "CC0-1.0"
+    },
+    "studio-art-abstract": {
+      "name": "Walnut framed abstract",
+      "bytes": 12256,
+      "sourceVertices": 2802,
+      "geometryHash": "db93f69bbd8409d23340281905c1458bac56f039eb6cc401025aba6e8d6e28c8",
+      "dimensions": [
+        0.72,
+        0.95,
+        0.045
+      ],
+      "license": "CC0-1.0"
+    },
+    "studio-art-landscape": {
+      "name": "Gallery landscape print",
+      "bytes": 13468,
+      "sourceVertices": 2836,
+      "geometryHash": "5b980fff034427ea47be8ca380fa08d85da05a6e4d78032e66df12f73f9d256d",
+      "dimensions": [
+        1.1,
+        0.65,
+        0.04
+      ],
+      "license": "CC0-1.0"
+    },
+    "studio-mirror-brass": {
+      "name": "Round brass wall mirror",
+      "bytes": 7944,
+      "sourceVertices": 491,
+      "geometryHash": "a51566b85a5b337c880cbb31cfdba37805875ca85759638c06eb47db73a03661",
+      "dimensions": [
+        0.8,
+        0.8,
+        0.045
+      ],
+      "license": "CC0-1.0"
+    },
+    "studio-divider-oak": {
+      "name": "Oak slatted room divider",
+      "bytes": 44152,
+      "sourceVertices": 15300,
+      "geometryHash": "228c3782f74f10a2487aff962c3143544b05c69f9980c463e696919217201385",
+      "dimensions": [
+        1.4,
+        2.1,
+        0.12
+      ],
+      "license": "CC0-1.0"
+    },
+    "studio-ottoman-boucle": {
+      "name": "Round bouclé ottoman",
+      "bytes": 7448,
+      "sourceVertices": 617,
+      "geometryHash": "068e99e1f291f68c99d4a67656209236b11efc24c97d3bce138f3e513fe8882b",
+      "dimensions": [
+        0.7,
+        0.43,
+        0.7
+      ],
+      "license": "CC0-1.0"
+    },
+    "studio-ottoman-velvet": {
+      "name": "Tufted velvet footstool",
+      "bytes": 27956,
+      "sourceVertices": 3507,
+      "geometryHash": "42f08a04a84e4cb7fa042b5d1da505e69710930cd7882fbf6286754e1daa2106",
+      "dimensions": [
+        0.85,
+        0.4,
+        0.55
+      ],
+      "license": "CC0-1.0"
+    },
+    "studio-table-marble": {
+      "name": "Calacatta oval coffee table",
+      "bytes": 10504,
+      "sourceVertices": 884,
+      "geometryHash": "76c6c022bd970eaf5e98bcd4e44878bf8cd36e3b462470a1d10de461f8b8c542",
+      "dimensions": [
+        1.25,
+        0.38,
+        0.75
+      ],
+      "license": "CC0-1.0"
+    },
+    "studio-sofa-curve": {
+      "name": "Curved bouclé sofa",
+      "bytes": 87204,
+      "sourceVertices": 11304,
+      "geometryHash": "e9fa9726e7904542fbf388b1e436006cf7fbfb95d89dd5c0080bf0bcffa39670",
+      "dimensions": [
+        2.5,
+        0.82,
+        1.15
+      ],
+      "license": "CC0-1.0"
+    },
+    "studio-fireplace-stone": {
+      "name": "Limestone mantel fireplace",
+      "bytes": 21016,
+      "sourceVertices": 4809,
+      "geometryHash": "3c467e8438e135b0c20c8fc86e85ac6ef107964ea2fd7dd60e78dc704ebde96e",
+      "dimensions": [
+        1.35,
+        1.05,
+        0.4
+      ],
+      "license": "CC0-1.0"
+    }
+  }
+}

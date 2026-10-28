@@ -1,0 +1,8 @@
+import {chromium} from '@playwright/test';
+import {writeFile,mkdir} from 'node:fs/promises';
+import {catalog} from '../packages/core/src/catalog';
+const browser=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+try{const page=await browser.newPage({viewport:{width:400,height:400}});const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto(`${process.env.BASE_URL??'http://127.0.0.1:3040'}/asset-preview`);await mkdir('apps/web/public/assets/thumbnails',{recursive:true});
+for(const c of catalog){if(await page.locator('[data-id]').getAttribute('data-id')!==c.id)await page.evaluate(id=>window.dispatchEvent(new CustomEvent('buildspace-preview',{detail:id})),c.id);await page.locator(`[data-preview-ready="true"][data-id="${c.id}"]`).waitFor();const visible=await page.locator('canvas').evaluate(canvas=>{const gl=canvas.getContext('webgl2')!;const pixels=new Uint8Array(canvas.width*canvas.height*4);gl.readPixels(0,0,canvas.width,canvas.height,gl.RGBA,gl.UNSIGNED_BYTE,pixels);let count=0;for(let i=3;i<pixels.length;i+=4)if(pixels[i]>10)count++;return count;});if(visible<100)throw new Error(`Blank thumbnail for ${c.id}`);const data=await page.locator('canvas').evaluate(canvas=>(canvas as HTMLCanvasElement).toDataURL('image/webp',.9));await writeFile(`apps/web/public/assets/thumbnails/${c.id}.webp`,Buffer.from(data.split(',')[1],'base64'));}
+if(errors.length)throw new Error(errors.join('\n'));console.log(`Rendered ${catalog.length} actual 3D model thumbnails`);
+}finally{await browser.close();}
